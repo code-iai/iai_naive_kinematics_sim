@@ -1,6 +1,8 @@
 # iai_naive_kinematics_sim
 A set of naive robot kinematics simulators for ROS. Main design goal: Providing ROS-based kinematics simulators for early-stage development of kinematics algorithms that are light-weight in comparison to full-scale simulators, e.g. Gazebo.
 
+![rviz view](https://raw.githubusercontent.com/code-iai/iai_naive_kinematics_sim/master/doc/pr2_sim_example.png)
+
 ## Installation
 ### Installation from source using ```catkin``` and ```rosdep```
 This installation assumes you are using ROS Indigo on Ubuntu 14.04.
