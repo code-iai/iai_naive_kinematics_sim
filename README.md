@@ -1,5 +1,5 @@
 # iai_naive_kinematics_sim
-TODO: document this package!
+A set of naive robot kinematics simulators for ROS. Main design goal: Providing ROS-based kinematics simulators for early-stage development of kinematics algorithms that are light-weight in comparison to full-scale simulators, e.g. Gazebo.
 
 ## Installation
 ### Installation from source using ```catkin``` and ```rosdep```
