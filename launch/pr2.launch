@@ -1,4 +1,5 @@
 <launch>
+  <arg name="sim_frequency" default="50" />
 
   <param name="robot_description"
     textfile="$(find iai_naive_kinematics_sim)/test_data/pr2.urdf" />
@@ -7,6 +8,7 @@
         name="velocity_resolved_sim" output="screen">
     <rosparam param="controlled_joints"
       file="$(find iai_naive_kinematics_sim)/test_data/pr2_controlled_joints.yaml" />
+    <param name="sim_frequency" value="$(arg sim_frequency)" />
   </node>
 
   <node pkg="robot_state_publisher" type="robot_state_publisher"
