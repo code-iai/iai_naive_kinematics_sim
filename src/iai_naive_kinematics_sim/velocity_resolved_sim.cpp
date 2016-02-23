@@ -139,7 +139,7 @@ class SimulatorNode
       {
         boost::function<void(const std_msgs::Float64::ConstPtr&)> f =
           boost::bind(&SimulatorNode::callback, this, _1, controlled_joints[i]);
-        std::string topic = "/" + controlled_joints[i] + "/vel_cmd";
+        std::string topic = "/" + controlled_joints[i] + "_velocity_controller/command";
         ros::Subscriber sub = nh_.subscribe(topic, 1, f);
         subs_.push_back(sub);
       }
