@@ -1,5 +1,5 @@
 <launch>
-  <arg name="sim_frequency" default="50" />
+  <arg name="sim_frequency" default="100" />
 
   <param name="robot_description"
     textfile="$(find iai_naive_kinematics_sim)/test_data/pr2.urdf" />
