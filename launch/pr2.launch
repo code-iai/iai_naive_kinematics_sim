@@ -16,4 +16,10 @@
 
   <node pkg="tf2_ros" type="buffer_server" name="tf2_buffer_server" />
 
+  <node pkg="tf" type="static_transform_publisher" name="fake_localization"
+        output="screen" args="0 0 0 0 0 0 odom map 100" />
+
+  <node pkg="tf" type="static_transform_publisher" name="fake_odometry"
+        output="screen" args="0 0 0 0 0 0 base_footprint odom 100" />
+
 </launch>
