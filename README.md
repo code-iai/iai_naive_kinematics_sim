@@ -21,8 +21,8 @@ Step-by-step instructions for installing this package in a ```catkin``` workspac
 This node periodically publishes on ```/joint_states``` and subscribes to velocity commands for a configurable subset of its joints. It is recommended to use ```rviz``` in conjunction with the ```robot_state_publisher``` for visualizing the simulated robot.
 
 There are two test/tutorial launch-files provided in this package to show-case the usage of the ```velocity_resolved_sim```:
-* ```roslauch iai_naive_kinematics_sim test_sim.launch``` starts the simulation for a minimalistic mechanism.
-* ```roslauch iai_naive_kinematics_sim pr2.launch``` starts the for the PR2.
+* ```roslaunch iai_naive_kinematics_sim test_sim.launch``` starts the simulation for a minimalistic mechanism.
+* ```roslaunch iai_naive_kinematics_sim pr2.launch``` starts the for the PR2.
 
 Topic Publications:
 * ```/joint_states``` (sensor_msgs/JointState): joint positions, velocities, and efforts for all joints of type ```prismatic```, ```revolute```, or ```continuous``` present URDF in parameter ```/robot_description```.
