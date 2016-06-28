@@ -55,10 +55,18 @@ namespace iai_naive_kinematics_sim
 
       void update(const ros::Time& now, double dt)
       {
-        // TODO: throw exceptions
-        assert(dt > 0);
-        assert(state_.name.size() == state_.position.size());
-        assert(state_.position.size() == state_.velocity.size());
+        if (dt <= 0)
+          throw std::runtime_error("Time interval given to update function not bigger than 0.");
+        if (state_.name.size() != state_.position.size())
+          throw std::range_error(std::string("Internal state of type sensor_msgs::JointState") +
+              " has fields 'name' and 'position' with different sizes: " +
+              std::to_string(state_.name.size()) + " compared to " +
+              std::to_string(state_.position.size()) + ".");
+        if (state_.name.size() != state_.velocity.size())
+          throw std::range_error(std::string("Internal state of type sensor_msgs::JointState") +
+              " has fields 'name' and 'velocity' with different sizes: " +
+              std::to_string(state_.name.size()) + " compared to " +
+              std::to_string(state_.velocity.size()) + ".");
 
         for(size_t i=0; i<state_.position.size(); ++i)
         {
@@ -84,9 +92,16 @@ namespace iai_naive_kinematics_sim
 
       void setSubJointState(const sensor_msgs::JointState& state)
       {
-        // TODO: throw exceptions
-        assert(state.name.size() == state.position.size());
-        assert(state.name.size() == state.velocity.size());
+        if (state.name.size() != state.position.size())
+          throw std::range_error(std::string("Given state of type sensor_msgs::JointState") +
+              " has fields 'name' and 'position' with different sizes: " +
+              std::to_string(state.name.size()) + " compared to " +
+              std::to_string(state.position.size()) + ".");
+        if (state.name.size() != state.velocity.size())
+          throw std::range_error(std::string("Message of type sensor_msgs::JointState") +
+              " has fields 'name' and 'velocity' with different sizes: " +
+              std::to_string(state.name.size()) + " compared to " +
+              std::to_string(state.velocity.size()) + ".");
 
         for(size_t i=0; i<state.name.size(); ++i)
           setJointState(state_, getJointIndex(state.name[i]), state.name[i], 
@@ -112,8 +127,9 @@ namespace iai_naive_kinematics_sim
       {
         std::map<std::string, size_t>::const_iterator it = index_map_.find(name);
         
-        // TODO: throw exception
-        assert(it!=index_map_.end());
+        if (it==index_map_.end())
+          throw std::runtime_error("Could not find joint index for joint with name '" +
+              name + "'.");
 
         return it->second;
       }
@@ -123,8 +139,8 @@ namespace iai_naive_kinematics_sim
         std::map<std::string, boost::shared_ptr<urdf::Joint> >::const_iterator it =
           model_.joints_.find(name);
 
-        // TODO: throw exception
-        assert(it != model_.joints_.end());
+        if (it == model_.joints_.end())
+          throw std::runtime_error("URDF has no joint with name '" + name + "'.");
 
         return it->second;
       }

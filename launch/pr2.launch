@@ -13,6 +13,7 @@
       file="$(find iai_naive_kinematics_sim)/test_data/pr2_controlled_joints.yaml" />
     <rosparam param="start_config" file="$(arg start_config_file)" />
     <param name="sim_frequency" value="$(arg sim_frequency)" />
+    <param name="watchdog_period" value="0.1" />
   </node>
 
   <node pkg="robot_state_publisher" type="robot_state_publisher"

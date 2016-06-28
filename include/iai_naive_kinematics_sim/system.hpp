@@ -44,8 +44,9 @@ namespace iai_naive_kinematics_sim
           double watchdog_period)
       {
         for(size_t i=0; i<controlled_joints.size(); ++i)
-          // TODO: throw exception
-          assert(modelHasMovableJoint(model, controlled_joints[i]));
+          if (!modelHasMovableJoint(model, controlled_joints[i]))
+            throw std::runtime_error("URDF model has no movable joint with name '" +
+                controlled_joints[i] + "'.");
         
         sim_.init(model);
 
@@ -78,8 +79,9 @@ namespace iai_naive_kinematics_sim
       {
         std::map<std::string, Watchdog>::iterator it = dogs_.find(name);
 
-        // TODO: throw exception
-        assert(it!=dogs_.end());
+        if (it==dogs_.end())
+          throw std::runtime_error("No velocity interface for joint with name '" + 
+              name + "'.");
 
         it->second.setNewCommand(now, velocity);
       }

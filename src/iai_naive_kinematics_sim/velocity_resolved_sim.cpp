@@ -31,6 +31,17 @@
 #include <sensor_msgs/JointState.h>
 #include <std_msgs/Float64.h>
 
+template <class T>
+T readParam(const ros::NodeHandle& nh, const std::string& param_name)
+{
+  T param;
+  if(!nh.getParam(param_name, param))
+    throw std::runtime_error("Could not find parameter with name '" +
+        param_name + "' in namespace '" + nh.getNamespace() + "'.");
+
+  return param;
+}
+   
 class SimulatorNode
 {
   public:
@@ -49,13 +60,14 @@ class SimulatorNode
       sim_.setSubJointState(readStartConfig());
 
       startSubs(controlled_joints);
+      pub_ = nh_.advertise<sensor_msgs::JointState>("/joint_states", 1);
+      ok_ = true;
     }
 
     void run()
     {
-      pub_ = nh_.advertise<sensor_msgs::JointState>("/joint_states", 1);
       ros::Rate sim_rate(sim_frequency_);
-      while(ros::ok())
+      while(ros::ok() && ok())
       {
         sim_.update(ros::Time::now(), 1.0/sim_frequency_);
         pub_.publish(sim_.getJointState());
@@ -70,33 +82,53 @@ class SimulatorNode
     std::vector<ros::Subscriber> subs_;
     double sim_frequency_;
     iai_naive_kinematics_sim::System sim_;
+    bool ok_;
+
+    void stop()
+    {
+      ok_ = false;
+    }
+
+    bool ok() const
+    {
+      return ok_;
+    }
 
     void callback(const std_msgs::Float64::ConstPtr& msg, const std::string& name)
     {
-      sim_.setVelocityCommand(name, msg->data, ros::Time::now());
+      try
+      {
+        sim_.setVelocityCommand(name, msg->data, ros::Time::now());
+      }
+      catch (const std::exception& e)
+      {
+        ROS_ERROR("%s", e.what());
+        stop();
+      }
     }
 
     urdf::Model readUrdf() const
     {
-      std::string urdf_descr_;
-      assert(nh_.getParam("/robot_description", urdf_descr_));
+      std::string urdf_descr_ = readParam<std::string>(nh_, "/robot_description");
       urdf::Model model;
-      assert(model.initString(urdf_descr_));
+      if(!model.initString(urdf_descr_))
+        throw std::runtime_error("Could not parse given robot description.");
       return model;
     }
 
     void readSimFrequency()
     {
-      nh_.param("sim_frequency", sim_frequency_, 50.0);
-      assert(sim_frequency_ > 0.0);
+      sim_frequency_ = readParam<double>(nh_, "sim_frequency");
+      if(sim_frequency_ <= 0.0)
+        throw std::runtime_error("Read a non-positive simulation frequency.");
       ROS_INFO("sim_frequency: %f", sim_frequency_);
     }
 
     double readWatchdogPeriod() const
     {
-      double watchdog_period;
-      nh_.param("watchdog_period", watchdog_period, 0.1);
-      assert(watchdog_period > 0.0);
+      double watchdog_period = readParam<double>(nh_, "watchdog_period");
+      if(watchdog_period <= 0.0)
+        throw std::runtime_error("Read a non-positive watchdog period.");
       ROS_INFO("watchdog_period: %f", watchdog_period);
 
       return watchdog_period;
@@ -104,9 +136,8 @@ class SimulatorNode
 
     std::vector<std::string> readControlledJoints() const
     {
-      std::vector<std::string> controlled_joints;
-      controlled_joints.clear();
-      assert(nh_.getParam("controlled_joints", controlled_joints));
+      std::vector<std::string> controlled_joints =
+        readParam< std::vector<std::string> >(nh_, "controlled_joints");
       std::string out_string;
       for(size_t i =0; i < controlled_joints.size(); ++i)
         out_string += " " + controlled_joints[i];
@@ -153,8 +184,15 @@ int main(int argc, char *argv[])
 
   SimulatorNode sim(ros::NodeHandle("~"));
 
-  sim.init();
-  sim.run();
+  try
+  {
+    sim.init();
+    sim.run();
+  }
+  catch (const std::exception& e)
+  {
+    ROS_ERROR("%s", e.what());
+  }
 
   return 0;
 }

@@ -31,34 +31,43 @@
 
 #include <sensor_msgs/JointState.h>
 #include <urdf/model.h>
+#include <exception>
 
 namespace iai_naive_kinematics_sim
 {
+  inline std::string messageRangeErrorJointState(const std::string field_name, 
+      size_t index, size_t field_size)
+  {
+    return "Asked to set joint " + field_name + " at index " + std::to_string(index) + 
+          " of a message of type sensor_msgs::JointState with " + std::to_string(field_size) + 
+          " elements.";
+  }
+
   inline void setJointName(sensor_msgs::JointState& state, size_t index, const std::string& name)
   {
-    // TODO: throw exception
-    assert(index < state.name.size());
+    if (index >= state.name.size())
+      throw std::range_error(messageRangeErrorJointState("name", index, state.name.size()));
     state.name[index] = name;
   }
 
   inline void setJointPosition(sensor_msgs::JointState& state, size_t index, double position)
   {
-    // TODO: throw exception
-    assert(index < state.position.size());
+    if (index >= state.position.size())
+      throw std::range_error(messageRangeErrorJointState("position", index, state.position.size()));
     state.position[index] = position;
   }
 
   inline void setJointVelocity(sensor_msgs::JointState& state, size_t index, double velocity)
   {
-    // TODO: throw exception
-    assert(index < state.velocity.size());
+    if (index >= state.velocity.size())
+      throw std::range_error(messageRangeErrorJointState("velocity", index, state.velocity.size()));
     state.velocity[index] = velocity;
   }
 
   inline void setJointEffort(sensor_msgs::JointState& state, size_t index, double effort)
   {
-    // TODO: throw exception
-    assert(index < state.effort.size());
+    if (index >= state.effort.size())
+      throw std::range_error(messageRangeErrorJointState("effort", index, state.effort.size()));
     state.effort[index] = effort;
   }
 
