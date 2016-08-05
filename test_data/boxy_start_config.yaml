@@ -1,5 +1,5 @@
 left_arm_0_joint: -0.03755723312497139
-left_arm_1_joint: 2.0983097553253174
+left_arm_1_joint: 1.70983097553253174
 left_arm_2_joint: -0.8166975975036621
 left_arm_3_joint: -1.040444254875183
 left_arm_4_joint: -0.06840144097805023
@@ -7,9 +7,9 @@ left_arm_5_joint: 0.8482518792152405
 left_arm_6_joint: -2.273681163787842
 right_arm_0_joint: -0.7327
 right_arm_1_joint: -1.8317
-right_arm_2_joint: -2.826
+right_arm_2_joint: -2.526
 right_arm_3_joint: -1.3607
-right_arm_4_joint: -2.966
+right_arm_4_joint: -2.566
 right_arm_5_joint: -0.3838
-right_arm_6_joint: -2.6167
+right_arm_6_joint: -2.5167
 triangle_base_joint: -0.31
