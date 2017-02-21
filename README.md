@@ -57,16 +57,3 @@ Now configure ```rviz``` to view the simulated robot:
 
 To move, e.g. the ```torso_lift_link``` with 10cm/s, enter the following command in the shell:
 * ```rostopic pub /torso_lift_joint/vel_cmd std_msgs/Float64 "data: 0.1" -r 20```
-
-### Boxy velocity-resolved simulation
-Execute these step-by-step instructions in separate shells to bring up the simulation:
-* ```roscore```
-* ```roslaunch iai_naive_kinematics_sim boxy.launch```
-* ```rviz```
-
-Now configure ```rviz``` to view the simulated robot:
-* select ```base_link``` as fixed frame
-* add a plugin of type ```RobotModel```
-
-To move, e.g. the ```triangle_base_link``` with 10cm/s, enter the following command in the shell:
-* ```rostopic pub /triangle_base_velocity_controller/command std_msgs/Float64 "data: 0.1" -r 20```
