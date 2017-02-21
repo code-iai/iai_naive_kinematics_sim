@@ -1,8 +1,6 @@
 # iai_naive_kinematics_sim
 A set of naive robot kinematics simulators for ROS. Main design goal: Providing ROS-based kinematics simulators for early-stage development of kinematics algorithms that are light-weight in comparison to full-scale simulators, e.g. Gazebo.
 
-![rviz view](https://raw.githubusercontent.com/code-iai/iai_naive_kinematics_sim/master/doc/pr2_sim_example.png)
-
 ## Installation
 ### Installation from source using ```catkin``` and ```rosdep```
 This installation assumes you are using ROS Indigo on Ubuntu 14.04.
@@ -22,7 +20,6 @@ This node periodically publishes on ```/joint_states``` and subscribes to veloci
 
 There are two test/tutorial launch-files provided in this package to show-case the usage of the ```velocity_resolved_sim```:
 * ```roslaunch iai_naive_kinematics_sim test_sim.launch``` starts the simulation for a minimalistic mechanism.
-* ```roslaunch iai_naive_kinematics_sim pr2.launch``` starts the for the PR2.
 
 Topic Publications:
 * ```/joint_states``` (sensor_msgs/JointState): joint positions, velocities, and efforts for all joints of type ```prismatic```, ```revolute```, or ```continuous``` present URDF in parameter ```/robot_description```.
@@ -43,17 +40,3 @@ Convenience features:
 
 Known limitations:
 * ```efforts```: The efforts of the ```/joint_states``` are not part of the simulation. They shall be always be set to 0.
-
-## Usage example
-### PR2 velocity-resolved simulation
-Execute these step-by-step instructions in separate shells to bring up the simulation:
-* ```roscore```
-* ```roslaunch iai_naive_kinematics_sim pr2.launch```
-* ```rviz```
-
-Now configure ```rviz``` to view the simulated robot:
-* select ```base_link``` as fixed frame
-* add a plugin of type ```RobotModel```
-
-To move, e.g. the ```torso_lift_link``` with 10cm/s, enter the following command in the shell:
-* ```rostopic pub /torso_lift_joint/vel_cmd std_msgs/Float64 "data: 0.1" -r 20```
