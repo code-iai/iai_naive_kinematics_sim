@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Georg Bartels, <georg.bartels@cs.uni-bremen.de>
+ * Copyright (c) 2015-2017, Georg Bartels, <georg.bartels@cs.uni-bremen.de>
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -36,8 +36,8 @@ namespace iai_naive_kinematics_sim
   class Watchdog
   {
     public:
-      Watchdog() : command_(0.0), period_(ros::Duration(0.0)), last_update_(ros::Time(0.0)) {}
-      Watchdog(const ros::Duration& period) : command_(0.0), period_(period), last_update_(ros::Time(0.0)) {}
+      Watchdog() : period_(ros::Duration(0.0)), last_update_(ros::Time(0.0)) {}
+      Watchdog(const ros::Duration& period) : period_(period), last_update_(ros::Time(0.0)) {}
       ~Watchdog() {}
 
       const ros::Duration& getPeriod() const
@@ -49,16 +49,10 @@ namespace iai_naive_kinematics_sim
       {
         period_ = period;
       }
-      double getCommand() const
-      {
-        return command_;
-      }
 
-      void setNewCommand(const ros::Time& now, double command)
+      void setLastUpdateTime(const ros::Time& last_update)
       {
-        command_ = command;
-        last_update_ = now;
-        update(now);
+        last_update_ = last_update;
       }
 
       const ros::Time& getLastUpdateTime() const
@@ -66,14 +60,12 @@ namespace iai_naive_kinematics_sim
         return last_update_;
       }
 
-      void update(const ros::Time& now)
+      bool barks(const ros::Time& now) const
       {
-        if((now-last_update_) > period_)
-          command_ = 0.0;
+        return (now-last_update_) > period_;
       }
 
     private:
-      double command_;
       ros::Duration period_;
       ros::Time last_update_;
   };

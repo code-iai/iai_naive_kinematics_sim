@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Georg Bartels, <georg.bartels@cs.uni-bremen.de>
+ * Copyright (c) 2015-2017, Georg Bartels, <georg.bartels@cs.uni-bremen.de>
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -127,6 +127,20 @@ namespace iai_naive_kinematics_sim
         pushBackJointState(state, it->second->name, 0.0, 0.0, 0.0);
 
     return state;
+  }
+
+  inline std::map<std::string, Watchdog> makeWatchdogs(const urdf::Model& model,
+      const std::vector<std::string>& controlled_joints, const ros::Duration watchdog_period)
+  {
+    std::map<std::string, Watchdog> watchdogs;
+    for(size_t i=0; i<controlled_joints.size(); ++i)
+      if (!modelHasMovableJoint(model, controlled_joints[i]))
+        throw std::runtime_error("URDF model has no movable joint with name '" +
+            controlled_joints[i] + "'.");
+      else
+        watchdogs[controlled_joints[i]] = Watchdog(watchdog_period);
+
+    return watchdogs;
   }
 
 }

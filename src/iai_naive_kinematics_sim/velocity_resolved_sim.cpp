@@ -45,17 +45,14 @@ class SimulatorNode
 {
   public:
     SimulatorNode(const ros::NodeHandle& nh): 
-      nh_(nh), sim_frequency_(0.0), sim_(iai_naive_kinematics_sim::System()) {}
+      nh_(nh), sim_frequency_(0.0), {}
     ~SimulatorNode() {}
 
     void init()
     {
       readSimFrequency();
 
-      std::vector<std::string> controlled_joints =
-        readControlledJoints();
-
-      sim_.init(readUrdf(), controlled_joints, readWatchdogPeriod());
+      sim_.init(readUrdf(), readControlledJoints(), readWatchdogPeriod());
       sim_.setSubJointState(readStartConfig());
 
       sub_ = nh_.subscribe("commands", 1, &SimulatorNode::callback, this,
@@ -81,7 +78,7 @@ class SimulatorNode
     ros::Publisher pub_;
     ros::Subscriber sub_;
     double sim_frequency_;
-    iai_naive_kinematics_sim::System sim_;
+    iai_naive_kinematics_sim::SimulatorVelocityResolved sim_;
     bool ok_;
 
     void stop()
@@ -99,7 +96,7 @@ class SimulatorNode
       try
       {
         ros::Time now = ros::Time::now();
-        sim_.setVelocityCommand(*msg, now);
+        sim_.setSubCommand(*msg, now);
       }
       catch (const std::exception& e)
       {

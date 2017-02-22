@@ -30,10 +30,11 @@
 #define IAI_NAIVE_KINEMATICS_SIM_SIMULATOR_HPP
 
 #include <iai_naive_kinematics_sim/utils.hpp>
+#include <iai_naive_kinematics_sim/watchdog.hpp>
 
 namespace iai_naive_kinematics_sim
 {
- 
+  // FIXME: rename
   class SimulatorVelocityResolved
   {
     public:
@@ -41,11 +42,14 @@ namespace iai_naive_kinematics_sim
 
       ~SimulatorVelocityResolved() {}
 
-      void init(const urdf::Model& model)
+      void init(const urdf::Model& model, const std::vector<std::string>& controlled_joints,
+          const ros::Duration& watchdog_period)
       {
         model_ = model;
         state_ = bootstrapJointState(model);
+        command_ = state_;
         index_map_ = makeJointIndexMap(state_.name);
+        watchdogs_ = makeWatchdogs(model, controlled_joints, watchdog_period);
       }
 
       size_t size() const
@@ -68,8 +72,11 @@ namespace iai_naive_kinematics_sim
               std::to_string(state_.name.size()) + " compared to " +
               std::to_string(state_.velocity.size()) + ".");
 
+        // FIXME: ask the watchdogs
+        
         for(size_t i=0; i<state_.position.size(); ++i)
         {
+          // FIXME: use command_
           state_.position[i] += state_.velocity[i] * dt;
           enforceJointLimits(state_.name[i]);
         } 
@@ -83,6 +90,11 @@ namespace iai_naive_kinematics_sim
         return state_;
       }
 
+      const sensor_msgs::JointState& getCommand() const
+      {
+        return command_;
+      }
+
       bool hasJoint(const std::string& name) const
       {
         std::map<std::string, size_t>::const_iterator it = index_map_.find(name);
@@ -90,15 +102,22 @@ namespace iai_naive_kinematics_sim
         return it!=index_map_.end();
       }
 
+      bool hasControlledJoint(const std::string& name) const
+      {
+        std::map<std::string, Watchdog>::const_iterator it = watchdogs_.find(name);
+        
+        return it!=watchdogs_.end();
+      }
+
       void setSubJointState(const sensor_msgs::JointState& state)
       {
         if (state.name.size() != state.position.size())
-          throw std::range_error(std::string("Given state of type sensor_msgs::JointState") +
+          throw std::range_error(std::string("State of type sensor_msgs::JointState") +
               " has fields 'name' and 'position' with different sizes: " +
               std::to_string(state.name.size()) + " compared to " +
               std::to_string(state.position.size()) + ".");
         if (state.name.size() != state.velocity.size())
-          throw std::range_error(std::string("Message of type sensor_msgs::JointState") +
+          throw std::range_error(std::string("State of type sensor_msgs::JointState") +
               " has fields 'name' and 'velocity' with different sizes: " +
               std::to_string(state.name.size()) + " compared to " +
               std::to_string(state.velocity.size()) + ".");
@@ -108,22 +127,40 @@ namespace iai_naive_kinematics_sim
               state.position[i], state.velocity[i], state.effort[i]);
       }
 
-      void setNextJointVelocity(const std::string& joint_name, double velocity)
+      void setSubCommand(const sensor_msgs::JointState& command, const ros::Time& now)
       {
-        setJointVelocity(state_, getJointIndex(joint_name), velocity);
+        // FIXME: code duplication! think about refactoring
+        if (command.name.size() != command.velocity.size())
+          throw std::range_error(std::string("Command of type sensor_msgs::JointState") +
+              " has fields 'name' and 'velocity' with different sizes: " +
+              std::to_string(state.name.size()) + " compared to " +
+              std::to_string(state.velocity.size()) + ".");
+
+        for (size_t i=0; i<command.name.size(); ++i)
+        {
+          std::map<std::string, Watchdog>::iterator it = dogs_.find(msg.name[i]);
+
+          if (it==dogs_.end())
+            throw std::runtime_error("No velocity interface for joint with name '" + 
+                msg.name[i] + "'.");
+
+          it->second.pet(now);
+          setJointVelocity(command_, getJointIndex(command.name[i], command.velocity[i]));
+        }
       }
 
     private:
-      // internal state of the simulator
-      sensor_msgs::JointState state_;
-
-      // FIXME: add a JointState to store the command
+      // internal state and commands of the simulator
+      sensor_msgs::JointState state_, command_;
 
       // a map from joint-state names to their index in the joint-state message
       std::map<std::string, size_t> index_map_;
 
       // urdf model to lookup information about the joints
       urdf::Model model_;
+
+      // a map holding the watchdogs for our command interfaces
+      std::map<std::string, Watchdog> watchdogs_;
 
       size_t getJointIndex(const std::string& name) const
       {
