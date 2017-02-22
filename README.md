@@ -14,6 +14,13 @@ Step-by-step instructions for installing this package in a ```catkin``` workspac
 * ```cd ~/catkin_ws```
 * ```catkin_make```
 
+### Running unit tests
+This package comes with a couple of basic unit tests. You can run them like this:
+```shell
+roscd iai_naive_kinematics_sim
+catkin run_tests --this --no-deps
+```
+
 ## ROS Interface
 ###  Velocity-resolved simulation: ```velocity_resolved_sim```
 This node periodically publishes on ```/joint_states``` and subscribes to velocity commands for a configurable subset of its joints. It is recommended to use ```rviz``` in conjunction with the ```robot_state_publisher``` for visualizing the simulated robot.
