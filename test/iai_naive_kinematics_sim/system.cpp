@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Georg Bartels, <georg.bartels@cs.uni-bremen.de>
+ * Copyright (c) 2015-2017, Georg Bartels, <georg.bartels@cs.uni-bremen.de>
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -106,7 +106,10 @@ TEST_F(SystemTest, SetVelocityCommand)
 {
   iai_naive_kinematics_sim::System sys;
   ASSERT_NO_THROW(sys.init(model_, controlled_joints_, 0.1));
-  ASSERT_NO_THROW(sys.setVelocityCommand("joint2", 0.05, ros::Time(0.05)));
+  sensor_msgs::JointState cmd;
+  cmd.name.push_back("joint2");
+  cmd.velocity.push_back(0.05);
+  ASSERT_NO_THROW(sys.setVelocityCommand(cmd, ros::Time(0.05)));
   
   checkJointStatesEquality(state1_, sys.getJointState());
 

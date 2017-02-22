@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Georg Bartels, <georg.bartels@cs.uni-bremen.de>
+ * Copyright (c) 2015-2017, Georg Bartels, <georg.bartels@cs.uni-bremen.de>
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -67,6 +67,9 @@ namespace iai_naive_kinematics_sim
 
       void update(const ros::Time& now, double dt)
       {
+        // FIXME: Now that I use sensor_msgs/JointState as a command message, it feels over-complicated
+        //        to hold the commands within the watchdogs: I basically store the velocity commands twice.
+        //        Watchdogs could be reduced to just remember the last time a command came in.
         for(std::map<std::string, Watchdog>::iterator it=dogs_.begin(); it!=dogs_.end(); ++it)
         {
           it->second.update(now);
@@ -75,15 +78,22 @@ namespace iai_naive_kinematics_sim
         sim_.update(now, dt);
       }
 
-      void setVelocityCommand(const std::string& name, double velocity, const ros::Time& now)
+      void setVelocityCommand(const sensor_msgs::JointState& msg, const ros::Time& now)
       {
-        std::map<std::string, Watchdog>::iterator it = dogs_.find(name);
+        if (msg.name.size() != msg.velocity.size())
+          throw std::runtime_error("Command message invalid: " + std::to_string(msg.name.size()) + 
+              " names and " + std::to_string(msg.velocity.size()) + " velocities given. Do not match.");
 
-        if (it==dogs_.end())
-          throw std::runtime_error("No velocity interface for joint with name '" + 
-              name + "'.");
+        for (size_t i=0; i<msg.name.size(); ++i)
+        {
+          std::map<std::string, Watchdog>::iterator it = dogs_.find(msg.name[i]);
 
-        it->second.setNewCommand(now, velocity);
+          if (it==dogs_.end())
+            throw std::runtime_error("No velocity interface for joint with name '" + 
+                msg.name[i] + "'.");
+
+          it->second.setNewCommand(now, msg.velocity[i]);
+        }
       }
 
       const SimulatorVelocityResolved& getSim() const

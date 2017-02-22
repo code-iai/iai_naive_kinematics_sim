@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Georg Bartels, <georg.bartels@cs.uni-bremen.de>
+ * Copyright (c) 2015-2017, Georg Bartels, <georg.bartels@cs.uni-bremen.de>
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -116,6 +116,8 @@ namespace iai_naive_kinematics_sim
     private:
       // internal state of the simulator
       sensor_msgs::JointState state_;
+
+      // FIXME: add a JointState to store the command
 
       // a map from joint-state names to their index in the joint-state message
       std::map<std::string, size_t> index_map_;

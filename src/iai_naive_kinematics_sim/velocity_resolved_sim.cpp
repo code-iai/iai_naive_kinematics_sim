@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Georg Bartels, <georg.bartels@cs.uni-bremen.de>
+ * Copyright (c) 2015-2017, Georg Bartels, <georg.bartels@cs.uni-bremen.de>
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,6 @@
 #include <ros/ros.h>
 #include <iai_naive_kinematics_sim/iai_naive_kinematics_sim.hpp>
 #include <sensor_msgs/JointState.h>
-#include <std_msgs/Float64.h>
 
 template <class T>
 T readParam(const ros::NodeHandle& nh, const std::string& param_name)
@@ -59,8 +58,9 @@ class SimulatorNode
       sim_.init(readUrdf(), controlled_joints, readWatchdogPeriod());
       sim_.setSubJointState(readStartConfig());
 
-      startSubs(controlled_joints);
-      pub_ = nh_.advertise<sensor_msgs::JointState>("/joint_states", 1);
+      sub_ = nh_.subscribe("commands", 1, &SimulatorNode::callback, this,
+            ros::TransportHints().tcpNoDelay());
+      pub_ = nh_.advertise<sensor_msgs::JointState>("joint_states", 1);
       ok_ = true;
     }
 
@@ -79,7 +79,7 @@ class SimulatorNode
   private:
     ros::NodeHandle nh_;
     ros::Publisher pub_;
-    std::vector<ros::Subscriber> subs_;
+    ros::Subscriber sub_;
     double sim_frequency_;
     iai_naive_kinematics_sim::System sim_;
     bool ok_;
@@ -94,11 +94,12 @@ class SimulatorNode
       return ok_;
     }
 
-    void callback(const std_msgs::Float64::ConstPtr& msg, const std::string& name)
+    void callback(const sensor_msgs::JointState::ConstPtr& msg)
     {
       try
       {
-        sim_.setVelocityCommand(name, msg->data, ros::Time::now());
+        ros::Time now = ros::Time::now();
+        sim_.setVelocityCommand(*msg, now);
       }
       catch (const std::exception& e)
       {
@@ -164,18 +165,6 @@ class SimulatorNode
       return joint_state;
     }
 
-    void startSubs(const std::vector<std::string>& controlled_joints)
-    {
-      for(size_t i=0; i<controlled_joints.size(); ++i)
-      {
-        boost::function<void(const std_msgs::Float64::ConstPtr&)> f =
-          boost::bind(&SimulatorNode::callback, this, _1, controlled_joints[i]);
-        std::string topic = "/" + controlled_joints[i].substr(0, controlled_joints[i].size() - 6) + 
-            "_velocity_controller/command";
-        ros::Subscriber sub = nh_.subscribe(topic, 1, f);
-        subs_.push_back(sub);
-      }
-    }
 };
 
 int main(int argc, char *argv[])
