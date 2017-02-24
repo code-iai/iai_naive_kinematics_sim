@@ -5,12 +5,11 @@ set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   urdf
-  sensor_msgs
-  std_msgs)
+  sensor_msgs)
 
 catkin_package(
   INCLUDE_DIRS include
-  CATKIN_DEPENDS roscpp urdf sensor_msgs std_msgs)
+  CATKIN_DEPENDS roscpp urdf sensor_msgs)
 
 include_directories(
   include
