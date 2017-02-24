@@ -4,12 +4,19 @@ set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
 
 find_package(catkin REQUIRED COMPONENTS
   roscpp
+  message_generation
   urdf
   sensor_msgs)
 
+add_service_files(DIRECTORY srv
+  FILES
+  SetJointState.srv)
+
+generate_messages(DEPENDENCIES sensor_msgs)
+
 catkin_package(
   INCLUDE_DIRS include
-  CATKIN_DEPENDS roscpp urdf sensor_msgs)
+  CATKIN_DEPENDS roscpp message_runtime urdf sensor_msgs)
 
 include_directories(
   include

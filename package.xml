@@ -15,6 +15,8 @@
 
   <buildtool_depend>catkin</buildtool_depend>
   <depend>roscpp</depend>
+  <depend>message_generation</depend>
+  <depend>message_runtime</depend>
   <depend>urdf</depend>
   <depend>sensor_msgs</depend>
   <test_depend>gtest</test_depend>
