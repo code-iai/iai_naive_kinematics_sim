@@ -32,6 +32,7 @@
 #include <sensor_msgs/JointState.h>
 #include <urdf/model.h>
 #include <exception>
+#include <iai_naive_kinematics_sim/watchdog.hpp>
 
 namespace iai_naive_kinematics_sim
 {

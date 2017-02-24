@@ -45,7 +45,7 @@ class SimulatorNode
 {
   public:
     SimulatorNode(const ros::NodeHandle& nh): 
-      nh_(nh), sim_frequency_(0.0), {}
+      nh_(nh), sim_frequency_(0.0) {}
     ~SimulatorNode() {}
 
     void init()
@@ -64,9 +64,10 @@ class SimulatorNode
     void run()
     {
       ros::Rate sim_rate(sim_frequency_);
+      ros::Duration period = sim_rate.expectedCycleTime();
       while(ros::ok() && ok())
       {
-        sim_.update(ros::Time::now(), 1.0/sim_frequency_);
+        sim_.update(ros::Time::now(), period);
         pub_.publish(sim_.getJointState());
         ros::spinOnce();
         sim_rate.sleep();
@@ -122,14 +123,14 @@ class SimulatorNode
       ROS_INFO("sim_frequency: %f", sim_frequency_);
     }
 
-    double readWatchdogPeriod() const
+    ros::Duration readWatchdogPeriod() const
     {
       double watchdog_period = readParam<double>(nh_, "watchdog_period");
       if(watchdog_period <= 0.0)
         throw std::runtime_error("Read a non-positive watchdog period.");
       ROS_INFO("watchdog_period: %f", watchdog_period);
 
-      return watchdog_period;
+      return ros::Duration(watchdog_period);
     }
 
     std::vector<std::string> readControlledJoints() const

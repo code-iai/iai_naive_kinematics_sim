@@ -55,6 +55,11 @@ namespace iai_naive_kinematics_sim
         last_update_ = last_update;
       }
 
+      void pet(const ros::Time& last_update)
+      {
+        setLastUpdateTime(last_update);
+      }
+
       const ros::Time& getLastUpdateTime() const
       {
         return last_update_;

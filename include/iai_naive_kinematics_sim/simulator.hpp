@@ -57,10 +57,11 @@ namespace iai_naive_kinematics_sim
         return index_map_.size();
       }
 
-      void update(const ros::Time& now, double dt)
+      void update(const ros::Time& now, const ros::Duration& dt)
       {
-        if (dt <= 0)
+        if (dt.toSec() <= 0)
           throw std::runtime_error("Time interval given to update function not bigger than 0.");
+        // FIXME: consider dropping these checks to increase speed
         if (state_.name.size() != state_.position.size())
           throw std::range_error(std::string("Internal state of type sensor_msgs::JointState") +
               " has fields 'name' and 'position' with different sizes: " +
@@ -72,12 +73,15 @@ namespace iai_naive_kinematics_sim
               std::to_string(state_.name.size()) + " compared to " +
               std::to_string(state_.velocity.size()) + ".");
 
-        // FIXME: ask the watchdogs
+        // ask the watchdogs, and stop joints that have not received a new command in a while
+        for (std::map<std::string, Watchdog>::const_iterator it=watchdogs_.begin(); it!=watchdogs_.end(); ++it)
+          if (it->second.barks(now))
+            setJointVelocity(command_, getJointIndex(it->first), 0.0);
         
         for(size_t i=0; i<state_.position.size(); ++i)
         {
-          // FIXME: use command_
-          state_.position[i] += state_.velocity[i] * dt;
+          state_.velocity[i] = command_.velocity[i];
+          state_.position[i] += state_.velocity[i] * dt.toSec();
           enforceJointLimits(state_.name[i]);
         } 
 
@@ -111,6 +115,7 @@ namespace iai_naive_kinematics_sim
 
       void setSubJointState(const sensor_msgs::JointState& state)
       {
+        // FIXME: code duplication! think about refactoring
         if (state.name.size() != state.position.size())
           throw std::range_error(std::string("State of type sensor_msgs::JointState") +
               " has fields 'name' and 'position' with different sizes: " +
@@ -133,19 +138,19 @@ namespace iai_naive_kinematics_sim
         if (command.name.size() != command.velocity.size())
           throw std::range_error(std::string("Command of type sensor_msgs::JointState") +
               " has fields 'name' and 'velocity' with different sizes: " +
-              std::to_string(state.name.size()) + " compared to " +
-              std::to_string(state.velocity.size()) + ".");
+              std::to_string(command.name.size()) + " compared to " +
+              std::to_string(command.velocity.size()) + ".");
 
         for (size_t i=0; i<command.name.size(); ++i)
         {
-          std::map<std::string, Watchdog>::iterator it = dogs_.find(msg.name[i]);
+          std::map<std::string, Watchdog>::iterator it = watchdogs_.find(command.name[i]);
 
-          if (it==dogs_.end())
+          if (it==watchdogs_.end())
             throw std::runtime_error("No velocity interface for joint with name '" + 
-                msg.name[i] + "'.");
+                command.name[i] + "'.");
 
           it->second.pet(now);
-          setJointVelocity(command_, getJointIndex(command.name[i], command.velocity[i]));
+          setJointVelocity(command_, getJointIndex(command.name[i]), command.velocity[i]);
         }
       }
 
