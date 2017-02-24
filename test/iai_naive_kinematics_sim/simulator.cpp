@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Georg Bartels, <georg.bartels@cs.uni-bremen.de>
+ * Copyright (c) 2015-2017, Georg Bartels, <georg.bartels@cs.uni-bremen.de>
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -86,10 +86,10 @@ class SimulatorTest : public ::testing::Test
       EXPECT_EQ(a.header.stamp, b.header.stamp);
       EXPECT_STREQ(a.header.frame_id.c_str(), b.header.frame_id.c_str());
 
-      EXPECT_EQ(a.name.size(), b.name.size());
-      EXPECT_EQ(a.position.size(), b.position.size());
-      EXPECT_EQ(a.velocity.size(), b.velocity.size());
-      EXPECT_EQ(a.effort.size(), b.effort.size());
+      ASSERT_EQ(a.name.size(), b.name.size());
+      ASSERT_EQ(a.position.size(), b.position.size());
+      ASSERT_EQ(a.velocity.size(), b.velocity.size());
+      ASSERT_EQ(a.effort.size(), b.effort.size());
     
       ASSERT_EQ(a.name.size(), a.position.size());
       ASSERT_EQ(a.name.size(), a.velocity.size());
@@ -156,26 +156,23 @@ TEST_F(SimulatorTest, Update)
   iai_naive_kinematics_sim::SimulatorVelocityResolved sim;
   ASSERT_NO_THROW(sim.init(model_, controlled_joints_, watchdog_period_));
   ASSERT_NO_THROW(sim.setSubJointState(state1_));
-  sensor_msgs::JointState cmd;
-  iai_naive_kinematics_sim::pushBackJointState(cmd, "joint2", -0.01, -0.02, -0.03);
-  ASSERT_NO_THROW(sim.setSubCommand(cmd, now_));
+  ASSERT_NO_THROW(sim.setSubCommand(state3_, now_));
   ASSERT_NO_THROW(sim.update(now_, dt_));
 
   EXPECT_EQ(state1_.name.size(), sim.size());
   checkJointStatesEquality(sim.getJointState(), state3_);
 }
 
-TEST_F(SimulatorTest, SetNextJointVelocity)
+TEST_F(SimulatorTest, SetSubCommand)
 {
   iai_naive_kinematics_sim::SimulatorVelocityResolved sim;
   ASSERT_NO_THROW(sim.init(model_, controlled_joints_, watchdog_period_));
   sensor_msgs::JointState cmd;
-  cmd.name.push_back("joint2");
-  cmd.velocity.push_back(7.75);
-  ASSERT_NO_THROW(sim.setSubCommand(cmd, now_));
+  ASSERT_NO_THROW(sim.setSubCommand(state4_, now_));
 
   EXPECT_EQ(state1_.name.size(), sim.size());
-  checkJointStatesEquality(sim.getJointState(), state4_);
+  checkJointStatesEquality(sim.getJointState(), zero_state_);
+  checkJointStatesEquality(sim.getCommand(), state4_);
 }
 
 TEST_F(SimulatorTest, JointPositionLimits)
@@ -183,6 +180,7 @@ TEST_F(SimulatorTest, JointPositionLimits)
   iai_naive_kinematics_sim::SimulatorVelocityResolved sim;
   ASSERT_NO_THROW(sim.init(model_, controlled_joints_, watchdog_period_));
   ASSERT_NO_THROW(sim.setSubJointState(state1_));
+  ASSERT_NO_THROW(sim.setSubCommand(state1_, now_));
   ASSERT_NO_THROW(sim.update(now_, ros::Duration(4.0*dt_.toSec())));
 
   EXPECT_EQ(state1_.name.size(), sim.size());
@@ -207,4 +205,5 @@ TEST_F(SimulatorTest, HasJoint)
   EXPECT_FALSE(sim.hasControlledJoint("joint1"));
   EXPECT_TRUE(sim.hasControlledJoint("joint2"));
   EXPECT_FALSE(sim.hasControlledJoint("joint3"));
+
 }

@@ -80,7 +80,9 @@ namespace iai_naive_kinematics_sim
         
         for(size_t i=0; i<state_.position.size(); ++i)
         {
-          state_.velocity[i] = command_.velocity[i];
+          // FIXME: having this check might be inefficient, profile this
+          if (hasControlledJoint(state_.name[i]))
+            state_.velocity[i] = command_.velocity[i];
           state_.position[i] += state_.velocity[i] * dt.toSec();
           enforceJointLimits(state_.name[i]);
         } 
@@ -145,12 +147,11 @@ namespace iai_naive_kinematics_sim
         {
           std::map<std::string, Watchdog>::iterator it = watchdogs_.find(command.name[i]);
 
-          if (it==watchdogs_.end())
-            throw std::runtime_error("No velocity interface for joint with name '" + 
-                command.name[i] + "'.");
-
-          it->second.pet(now);
-          setJointVelocity(command_, getJointIndex(command.name[i]), command.velocity[i]);
+          if (it != watchdogs_.end())
+          {
+            it->second.pet(now);
+            setJointVelocity(command_, getJointIndex(command.name[i]), command.velocity[i]);
+          }
         }
       }
 

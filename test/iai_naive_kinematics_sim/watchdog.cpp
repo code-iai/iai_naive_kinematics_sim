@@ -63,12 +63,14 @@ TEST_F(WatchdogTest, BarkTest)
   checkWatchdogContent(dog, 0.1, 0.0);
   EXPECT_EQ(ros::Duration(0.1), dog.getPeriod());
   EXPECT_EQ(ros::Time(0.0), dog.getLastUpdateTime());
-  EXPECT_TRUE(dog.barks(ros::Time(0.0)));
+  EXPECT_FALSE(dog.barks(ros::Time(0.0)));
+  EXPECT_FALSE(dog.barks(ros::Time(0.1)));
+  EXPECT_TRUE(dog.barks(ros::Time(0.11)));
 
   dog.pet(ros::Time(0.03));
   checkWatchdogContent(dog, 0.1, 0.03);
 
-  EXPECT_TRUE(dog.barks(ros::Time(0.03)));
-  EXPECT_TRUE(dog.barks(ros::Time(0.06)));
+  EXPECT_FALSE(dog.barks(ros::Time(0.03)));
+  EXPECT_FALSE(dog.barks(ros::Time(0.06)));
   EXPECT_TRUE(dog.barks(ros::Time(0.131)));
 }
