@@ -63,17 +63,15 @@ class SimulatorNode
       ok_ = true;
     }
 
+    // FIXME: change into a periodic callback of a TimerEvent
     void run()
     {
-      // FIXME: change into a periodic callback of a TimerEvent
-      ros::Rate sim_rate(sim_frequency_);
-      ros::Duration period = sim_rate.expectedCycleTime();
       while(ros::ok() && ok())
       {
-        sim_.update(ros::Time::now(), period);
+        sim_.update(ros::Time::now(), sim_period_);
         pub_.publish(sim_.getJointState());
         ros::spinOnce();
-        sim_rate.sleep();
+        sim_frequency_.sleep();
       }
     }
 
@@ -82,8 +80,8 @@ class SimulatorNode
     ros::Publisher pub_;
     ros::Subscriber sub_;
     ros::ServiceServer server_;
-    // FIXME: change into a ROS::Rate object
-    double sim_frequency_;
+    ros::Rate sim_frequency_;
+    ros::Duration sim_period_;
     iai_naive_kinematics_sim::SimulatorVelocityResolved sim_;
     bool ok_;
 
@@ -140,10 +138,12 @@ class SimulatorNode
 
     void readSimFrequency()
     {
-      sim_frequency_ = readParam<double>(nh_, "sim_frequency");
-      if(sim_frequency_ <= 0.0)
+      double sim_frequency = readParam<double>(nh_, "sim_frequency");
+      if(sim_frequency <= 0.0)
         throw std::runtime_error("Read a non-positive simulation frequency.");
-      ROS_INFO("sim_frequency: %f", sim_frequency_);
+      ROS_INFO("sim_frequency: %f", sim_frequency);
+      sim_frequency_ = ros::Rate(sim_frequency);
+      sim_period_ = sim_frequency_.expectedCycleTime();
     }
 
     ros::Duration readWatchdogPeriod() const
