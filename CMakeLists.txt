@@ -4,24 +4,30 @@ set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
 
 find_package(catkin REQUIRED COMPONENTS
   roscpp
+  message_generation
   urdf
-  sensor_msgs
-  std_msgs)
+  sensor_msgs)
+
+add_service_files(DIRECTORY srv
+  FILES
+  SetJointState.srv)
+
+generate_messages(DEPENDENCIES sensor_msgs)
 
 catkin_package(
   INCLUDE_DIRS include
-  CATKIN_DEPENDS roscpp urdf sensor_msgs std_msgs)
+  CATKIN_DEPENDS roscpp message_runtime urdf sensor_msgs)
 
 include_directories(
   include
   ${catkin_INCLUDE_DIRS})
 
-add_executable(velocity_resolved_sim 
-  src/${PROJECT_NAME}/velocity_resolved_sim.cpp)
-add_dependencies(velocity_resolved_sim 
+add_executable(simulator 
+  src/${PROJECT_NAME}/simulator_main.cpp)
+add_dependencies(simulator 
   ${${PROJECT_NAME}_EXPORTED_TARGETS} 
   ${catkin_EXPORTED_TARGETS})
-target_link_libraries(velocity_resolved_sim
+target_link_libraries(simulator
   ${catkin_LIBRARIES})
 
 #############
@@ -62,7 +68,6 @@ target_link_libraries(velocity_resolved_sim
 set(TEST_SRCS
   test/${PROJECT_NAME}/main.cpp
   test/${PROJECT_NAME}/simulator.cpp
-  test/${PROJECT_NAME}/system.cpp
   test/${PROJECT_NAME}/watchdog.cpp)
 
 catkin_add_gtest(${PROJECT_NAME}-test ${TEST_SRCS}

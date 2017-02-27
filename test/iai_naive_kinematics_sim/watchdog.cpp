@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Georg Bartels, <georg.bartels@cs.uni-bremen.de>
+ * Copyright (c) 2015-2017, Georg Bartels, <georg.bartels@cs.uni-bremen.de>
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -36,42 +36,41 @@ class WatchdogTest : public ::testing::Test
     virtual void TearDown(){}
 
     void checkWatchdogContent(const iai_naive_kinematics_sim::Watchdog& dog, 
-        double period, double update_time, double command)
+        double period, double update_time)
     {
       EXPECT_EQ(ros::Duration(period), dog.getPeriod()); 
       EXPECT_EQ(ros::Time(update_time), dog.getLastUpdateTime()); 
-      EXPECT_DOUBLE_EQ(command, dog.getCommand());
     }
 };
 
 TEST_F(WatchdogTest, SaneConstructor)
 {
   iai_naive_kinematics_sim::Watchdog dog;
-  checkWatchdogContent(dog, 0.0, 0.0, 0.0);
+  checkWatchdogContent(dog, 0.0, 0.0);
 }
 
 TEST_F(WatchdogTest, AlternativeConstructor)
 {
   iai_naive_kinematics_sim::Watchdog dog(ros::Duration(1.1));
-  checkWatchdogContent(dog, 1.1, 0.0, 0.0);
+  checkWatchdogContent(dog, 1.1, 0.0);
 }
 TEST_F(WatchdogTest, BarkTest)
 {
   iai_naive_kinematics_sim::Watchdog dog;
   dog.setPeriod(ros::Duration(0.1));
 
-  dog.update(ros::Time(0.0));
-  checkWatchdogContent(dog, 0.1, 0.0, 0.0);
+  dog.pet(ros::Time(0.0));
+  checkWatchdogContent(dog, 0.1, 0.0);
   EXPECT_EQ(ros::Duration(0.1), dog.getPeriod());
   EXPECT_EQ(ros::Time(0.0), dog.getLastUpdateTime());
-  EXPECT_DOUBLE_EQ(0.0, dog.getCommand());
+  EXPECT_FALSE(dog.barks(ros::Time(0.0)));
+  EXPECT_FALSE(dog.barks(ros::Time(0.1)));
+  EXPECT_TRUE(dog.barks(ros::Time(0.11)));
 
-  dog.setNewCommand(ros::Time(0.03), 1.0);
-  checkWatchdogContent(dog, 0.1, 0.03, 1.0);
+  dog.pet(ros::Time(0.03));
+  checkWatchdogContent(dog, 0.1, 0.03);
 
-  dog.update(ros::Time(0.06));
-  checkWatchdogContent(dog, 0.1, 0.03, 1.0);
-
-  dog.update(ros::Time(0.131));
-  checkWatchdogContent(dog, 0.1, 0.03, 0.0);
+  EXPECT_FALSE(dog.barks(ros::Time(0.03)));
+  EXPECT_FALSE(dog.barks(ros::Time(0.06)));
+  EXPECT_TRUE(dog.barks(ros::Time(0.131)));
 }

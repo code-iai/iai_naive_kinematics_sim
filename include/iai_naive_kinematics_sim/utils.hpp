@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Georg Bartels, <georg.bartels@cs.uni-bremen.de>
+ * Copyright (c) 2015-2017, Georg Bartels, <georg.bartels@cs.uni-bremen.de>
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -32,6 +32,7 @@
 #include <sensor_msgs/JointState.h>
 #include <urdf/model.h>
 #include <exception>
+#include <iai_naive_kinematics_sim/watchdog.hpp>
 
 namespace iai_naive_kinematics_sim
 {
@@ -97,6 +98,20 @@ namespace iai_naive_kinematics_sim
     state.effort.clear();
   }
 
+  inline void sanityCheckJointState(const sensor_msgs::JointState& state)
+  {
+    if (state.name.size() != state.position.size())
+      throw std::range_error(std::string("State of type sensor_msgs::JointState") +
+          " has fields 'name' and 'position' with different sizes: " +
+          std::to_string(state.name.size()) + " compared to " +
+          std::to_string(state.position.size()) + ".");
+    if (state.name.size() != state.velocity.size())
+      throw std::range_error(std::string("State of type sensor_msgs::JointState") +
+          " has fields 'name' and 'velocity' with different sizes: " +
+          std::to_string(state.name.size()) + " compared to " +
+          std::to_string(state.velocity.size()) + ".");
+  }
+
   inline bool isMovingJoint(int type)
   {
     return (type == urdf::Joint::REVOLUTE ||
@@ -129,6 +144,30 @@ namespace iai_naive_kinematics_sim
     return state;
   }
 
+  inline std::map<std::string, Watchdog> makeWatchdogs(const urdf::Model& model,
+      const std::vector<std::string>& controlled_joints, const ros::Duration watchdog_period)
+  {
+    std::map<std::string, Watchdog> watchdogs;
+    for(size_t i=0; i<controlled_joints.size(); ++i)
+      if (!modelHasMovableJoint(model, controlled_joints[i]))
+        throw std::runtime_error("URDF model has no movable joint with name '" +
+            controlled_joints[i] + "'.");
+      else
+        watchdogs[controlled_joints[i]] = Watchdog(watchdog_period);
+
+    return watchdogs;
+  }
+
+  template <class T>
+  inline T readParam(const ros::NodeHandle& nh, const std::string& param_name)
+  {
+    T param;
+    if(!nh.getParam(param_name, param))
+      throw std::runtime_error("Could not find parameter with name '" +
+          param_name + "' in namespace '" + nh.getNamespace() + "'.");
+  
+    return param;
+  }
 }
 
 #endif

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Georg Bartels, <georg.bartels@cs.uni-bremen.de>
+ * Copyright (c) 2015-2017, Georg Bartels, <georg.bartels@cs.uni-bremen.de>
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -30,22 +30,25 @@
 #define IAI_NAIVE_KINEMATICS_SIM_SIMULATOR_HPP
 
 #include <iai_naive_kinematics_sim/utils.hpp>
+#include <iai_naive_kinematics_sim/watchdog.hpp>
 
 namespace iai_naive_kinematics_sim
 {
- 
-  class SimulatorVelocityResolved
+  class Simulator
   {
     public:
-      SimulatorVelocityResolved() {}
+      Simulator() {}
 
-      ~SimulatorVelocityResolved() {}
+      ~Simulator() {}
 
-      void init(const urdf::Model& model)
+      void init(const urdf::Model& model, const std::vector<std::string>& controlled_joints,
+          const ros::Duration& watchdog_period)
       {
         model_ = model;
         state_ = bootstrapJointState(model);
+        command_ = state_;
         index_map_ = makeJointIndexMap(state_.name);
+        watchdogs_ = makeWatchdogs(model, controlled_joints, watchdog_period);
       }
 
       size_t size() const
@@ -53,24 +56,22 @@ namespace iai_naive_kinematics_sim
         return index_map_.size();
       }
 
-      void update(const ros::Time& now, double dt)
+      void update(const ros::Time& now, const ros::Duration& dt)
       {
-        if (dt <= 0)
+        if (dt.toSec() <= 0)
           throw std::runtime_error("Time interval given to update function not bigger than 0.");
-        if (state_.name.size() != state_.position.size())
-          throw std::range_error(std::string("Internal state of type sensor_msgs::JointState") +
-              " has fields 'name' and 'position' with different sizes: " +
-              std::to_string(state_.name.size()) + " compared to " +
-              std::to_string(state_.position.size()) + ".");
-        if (state_.name.size() != state_.velocity.size())
-          throw std::range_error(std::string("Internal state of type sensor_msgs::JointState") +
-              " has fields 'name' and 'velocity' with different sizes: " +
-              std::to_string(state_.name.size()) + " compared to " +
-              std::to_string(state_.velocity.size()) + ".");
 
+        // ask the watchdogs, and stop joints that have not received a new command in a while
+        for (std::map<std::string, Watchdog>::const_iterator it=watchdogs_.begin(); it!=watchdogs_.end(); ++it)
+          if (it->second.barks(now))
+            setJointVelocity(command_, getJointIndex(it->first), 0.0);
+        
         for(size_t i=0; i<state_.position.size(); ++i)
         {
-          state_.position[i] += state_.velocity[i] * dt;
+          // FIXME: having this check might be inefficient, profile this
+          if (hasControlledJoint(state_.name[i]))
+            state_.velocity[i] = command_.velocity[i];
+          state_.position[i] += state_.velocity[i] * dt.toSec();
           enforceJointLimits(state_.name[i]);
         } 
 
@@ -83,6 +84,11 @@ namespace iai_naive_kinematics_sim
         return state_;
       }
 
+      const sensor_msgs::JointState& getCommand() const
+      {
+        return command_;
+      }
+
       bool hasJoint(const std::string& name) const
       {
         std::map<std::string, size_t>::const_iterator it = index_map_.find(name);
@@ -90,38 +96,50 @@ namespace iai_naive_kinematics_sim
         return it!=index_map_.end();
       }
 
+      bool hasControlledJoint(const std::string& name) const
+      {
+        std::map<std::string, Watchdog>::const_iterator it = watchdogs_.find(name);
+        
+        return it!=watchdogs_.end();
+      }
+
       void setSubJointState(const sensor_msgs::JointState& state)
       {
-        if (state.name.size() != state.position.size())
-          throw std::range_error(std::string("Given state of type sensor_msgs::JointState") +
-              " has fields 'name' and 'position' with different sizes: " +
-              std::to_string(state.name.size()) + " compared to " +
-              std::to_string(state.position.size()) + ".");
-        if (state.name.size() != state.velocity.size())
-          throw std::range_error(std::string("Message of type sensor_msgs::JointState") +
-              " has fields 'name' and 'velocity' with different sizes: " +
-              std::to_string(state.name.size()) + " compared to " +
-              std::to_string(state.velocity.size()) + ".");
+        sanityCheckJointState(state);
 
         for(size_t i=0; i<state.name.size(); ++i)
           setJointState(state_, getJointIndex(state.name[i]), state.name[i], 
               state.position[i], state.velocity[i], state.effort[i]);
       }
 
-      void setNextJointVelocity(const std::string& joint_name, double velocity)
+      void setSubCommand(const sensor_msgs::JointState& command, const ros::Time& now)
       {
-        setJointVelocity(state_, getJointIndex(joint_name), velocity);
+        sanityCheckJointState(command);
+
+        for (size_t i=0; i<command.name.size(); ++i)
+        {
+          std::map<std::string, Watchdog>::iterator it = watchdogs_.find(command.name[i]);
+
+          if (it != watchdogs_.end())
+          {
+            it->second.pet(now);
+            setJointVelocity(command_, getJointIndex(command.name[i]), command.velocity[i]);
+          }
+        }
       }
 
     private:
-      // internal state of the simulator
-      sensor_msgs::JointState state_;
+      // internal state and commands of the simulator
+      sensor_msgs::JointState state_, command_;
 
       // a map from joint-state names to their index in the joint-state message
       std::map<std::string, size_t> index_map_;
 
       // urdf model to lookup information about the joints
       urdf::Model model_;
+
+      // a map holding the watchdogs for our command interfaces
+      std::map<std::string, Watchdog> watchdogs_;
 
       size_t getJointIndex(const std::string& name) const
       {

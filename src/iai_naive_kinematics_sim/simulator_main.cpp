@@ -26,54 +26,24 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef IAI_NAIVE_KINEMATICS_SIM_WATCHDOG_HPP
-#define IAI_NAIVE_KINEMATICS_SIM_WATCHDOG_HPP
+#include <iai_naive_kinematics_sim/iai_naive_kinematics_sim.hpp>
 
-#include <ros/ros.h>
-
-namespace iai_naive_kinematics_sim
+  
+int main(int argc, char *argv[])
 {
-  class Watchdog
+  ros::init(argc,argv,"simulator");
+
+  iai_naive_kinematics_sim::SimulatorNode sim(ros::NodeHandle("~"));
+
+  try
   {
-    public:
-      Watchdog() : period_(ros::Duration(0.0)), last_update_(ros::Time(0.0)) {}
-      Watchdog(const ros::Duration& period) : period_(period), last_update_(ros::Time(0.0)) {}
-      ~Watchdog() {}
+    sim.init();
+    ros::spin();
+  }
+  catch (const std::exception& e)
+  {
+    ROS_ERROR("%s", e.what());
+  }
 
-      const ros::Duration& getPeriod() const
-      {
-        return period_;
-      }
-
-      void setPeriod(const ros::Duration& period)
-      {
-        period_ = period;
-      }
-
-      void setLastUpdateTime(const ros::Time& last_update)
-      {
-        last_update_ = last_update;
-      }
-
-      void pet(const ros::Time& last_update)
-      {
-        setLastUpdateTime(last_update);
-      }
-
-      const ros::Time& getLastUpdateTime() const
-      {
-        return last_update_;
-      }
-
-      bool barks(const ros::Time& now) const
-      {
-        return (now-last_update_) > period_;
-      }
-
-    private:
-      ros::Duration period_;
-      ros::Time last_update_;
-  };
+  return 0;
 }
-
-#endif

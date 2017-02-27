@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Georg Bartels, <georg.bartels@cs.uni-bremen.de>
+ * Copyright (c) 2015-2017, Georg Bartels, <georg.bartels@cs.uni-bremen.de>
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -34,8 +34,9 @@ class SimulatorTest : public ::testing::Test
    protected:
     virtual void SetUp()
     {
-      dt_ = 0.5;
+      dt_ = ros::Duration(0.5);
       now_ = ros::Time(1.1);
+      watchdog_period_ = ros::Duration(0.1);
 
       iai_naive_kinematics_sim::pushBackJointState(zero_state_, "joint1", 0.0, 0.0, 0.0);
       iai_naive_kinematics_sim::pushBackJointState(zero_state_, "joint2", 0.0, 0.0, 0.0);
@@ -67,6 +68,7 @@ class SimulatorTest : public ::testing::Test
       state6_.header.stamp = now_;
 
       model_.initFile("test_robot.urdf");
+      controlled_joints_.push_back("joint2");
     }
 
     virtual void TearDown(){}
@@ -74,8 +76,9 @@ class SimulatorTest : public ::testing::Test
     urdf::Model model_;
     sensor_msgs::JointState state1_, sub_state2_, state2_, state3_, state4_, 
       state5_, state6_, zero_state_;
-    double dt_;
+    ros::Duration dt_, watchdog_period_;
     ros::Time now_;
+    std::vector<std::string> controlled_joints_;
 
     void checkJointStatesEquality(const sensor_msgs::JointState& a, const sensor_msgs::JointState& b) const
     {
@@ -83,10 +86,10 @@ class SimulatorTest : public ::testing::Test
       EXPECT_EQ(a.header.stamp, b.header.stamp);
       EXPECT_STREQ(a.header.frame_id.c_str(), b.header.frame_id.c_str());
 
-      EXPECT_EQ(a.name.size(), b.name.size());
-      EXPECT_EQ(a.position.size(), b.position.size());
-      EXPECT_EQ(a.velocity.size(), b.velocity.size());
-      EXPECT_EQ(a.effort.size(), b.effort.size());
+      ASSERT_EQ(a.name.size(), b.name.size());
+      ASSERT_EQ(a.position.size(), b.position.size());
+      ASSERT_EQ(a.velocity.size(), b.velocity.size());
+      ASSERT_EQ(a.effort.size(), b.effort.size());
     
       ASSERT_EQ(a.name.size(), a.position.size());
       ASSERT_EQ(a.name.size(), a.velocity.size());
@@ -104,73 +107,86 @@ class SimulatorTest : public ::testing::Test
 
 TEST_F(SimulatorTest, SaneConstructor)
 {
-  iai_naive_kinematics_sim::SimulatorVelocityResolved sim;
+  iai_naive_kinematics_sim::Simulator sim;
 
   EXPECT_EQ(0, sim.size());
   checkJointStatesEquality(sim.getJointState(), sensor_msgs::JointState());
+  checkJointStatesEquality(sim.getCommand(), sensor_msgs::JointState());
 }
 
 TEST_F(SimulatorTest, Init)
 {
-  iai_naive_kinematics_sim::SimulatorVelocityResolved sim;
-  ASSERT_NO_THROW(sim.init(model_));
+  iai_naive_kinematics_sim::Simulator sim;
+  ASSERT_NO_THROW(sim.init(model_, controlled_joints_, watchdog_period_));
 
   EXPECT_EQ(zero_state_.name.size(), sim.size());
   checkJointStatesEquality(sim.getJointState(), zero_state_);
+  checkJointStatesEquality(sim.getCommand(), zero_state_);
+  EXPECT_TRUE(sim.hasJoint("joint1"));
+  EXPECT_TRUE(sim.hasJoint("joint2"));
+  EXPECT_FALSE(sim.hasJoint("joint3"));
+  EXPECT_FALSE(sim.hasControlledJoint("joint1"));
+  EXPECT_TRUE(sim.hasControlledJoint("joint2"));
 }
 
 TEST_F(SimulatorTest, setSubJointState1)
 {
-  iai_naive_kinematics_sim::SimulatorVelocityResolved sim;
-  ASSERT_NO_THROW(sim.init(model_));
+  iai_naive_kinematics_sim::Simulator sim;
+  ASSERT_NO_THROW(sim.init(model_, controlled_joints_, watchdog_period_));
   ASSERT_NO_THROW(sim.setSubJointState(state1_));
 
   EXPECT_EQ(state1_.name.size(), sim.size());
   checkJointStatesEquality(sim.getJointState(), state1_);
+  checkJointStatesEquality(sim.getCommand(), zero_state_);
 }
 
 TEST_F(SimulatorTest, setSubJointState2)
 {
-  iai_naive_kinematics_sim::SimulatorVelocityResolved sim;
-  ASSERT_NO_THROW(sim.init(model_));
+  iai_naive_kinematics_sim::Simulator sim;
+  ASSERT_NO_THROW(sim.init(model_, controlled_joints_, watchdog_period_));
   ASSERT_NO_THROW(sim.setSubJointState(sub_state2_));
 
   EXPECT_EQ(state1_.name.size(), sim.size());
   checkJointStatesEquality(sim.getJointState(), state2_);
+  checkJointStatesEquality(sim.getCommand(), zero_state_);
 }
 
 TEST_F(SimulatorTest, Update)
 {
-  iai_naive_kinematics_sim::SimulatorVelocityResolved sim;
-  ASSERT_NO_THROW(sim.init(model_));
+  iai_naive_kinematics_sim::Simulator sim;
+  ASSERT_NO_THROW(sim.init(model_, controlled_joints_, watchdog_period_));
   ASSERT_NO_THROW(sim.setSubJointState(state1_));
+  ASSERT_NO_THROW(sim.setSubCommand(state3_, now_));
   ASSERT_NO_THROW(sim.update(now_, dt_));
 
   EXPECT_EQ(state1_.name.size(), sim.size());
   checkJointStatesEquality(sim.getJointState(), state3_);
 }
 
-TEST_F(SimulatorTest, SetNextJointVelocity)
+TEST_F(SimulatorTest, SetSubCommand)
 {
-  iai_naive_kinematics_sim::SimulatorVelocityResolved sim;
-  ASSERT_NO_THROW(sim.init(model_));
-  ASSERT_NO_THROW(sim.setNextJointVelocity("joint2", 7.75));
+  iai_naive_kinematics_sim::Simulator sim;
+  ASSERT_NO_THROW(sim.init(model_, controlled_joints_, watchdog_period_));
+  sensor_msgs::JointState cmd;
+  ASSERT_NO_THROW(sim.setSubCommand(state4_, now_));
 
   EXPECT_EQ(state1_.name.size(), sim.size());
-  checkJointStatesEquality(sim.getJointState(), state4_);
+  checkJointStatesEquality(sim.getJointState(), zero_state_);
+  checkJointStatesEquality(sim.getCommand(), state4_);
 }
 
 TEST_F(SimulatorTest, JointPositionLimits)
 {
-  iai_naive_kinematics_sim::SimulatorVelocityResolved sim;
-  ASSERT_NO_THROW(sim.init(model_));
+  iai_naive_kinematics_sim::Simulator sim;
+  ASSERT_NO_THROW(sim.init(model_, controlled_joints_, watchdog_period_));
   ASSERT_NO_THROW(sim.setSubJointState(state1_));
-  ASSERT_NO_THROW(sim.update(now_, 4*dt_));
+  ASSERT_NO_THROW(sim.setSubCommand(state1_, now_));
+  ASSERT_NO_THROW(sim.update(now_, ros::Duration(4.0*dt_.toSec())));
 
   EXPECT_EQ(state1_.name.size(), sim.size());
   checkJointStatesEquality(sim.getJointState(), state5_);
 
-  ASSERT_NO_THROW(sim.update(now_, 6*dt_));
+  ASSERT_NO_THROW(sim.update(now_, ros::Duration(6.0*dt_.toSec())));
 
   EXPECT_EQ(state1_.name.size(), sim.size());
   checkJointStatesEquality(sim.getJointState(), state6_);
@@ -178,11 +194,16 @@ TEST_F(SimulatorTest, JointPositionLimits)
 
 TEST_F(SimulatorTest, HasJoint)
 {
-  iai_naive_kinematics_sim::SimulatorVelocityResolved sim;
-  ASSERT_NO_THROW(sim.init(model_));
+  iai_naive_kinematics_sim::Simulator sim;
+  ASSERT_NO_THROW(sim.init(model_, controlled_joints_, watchdog_period_));
 
   EXPECT_FALSE(sim.hasJoint("joint0"));
   EXPECT_TRUE(sim.hasJoint("joint1"));
   EXPECT_TRUE(sim.hasJoint("joint2"));
   EXPECT_FALSE(sim.hasJoint("joint3"));
+  EXPECT_FALSE(sim.hasControlledJoint("joint0"));
+  EXPECT_FALSE(sim.hasControlledJoint("joint1"));
+  EXPECT_TRUE(sim.hasControlledJoint("joint2"));
+  EXPECT_FALSE(sim.hasControlledJoint("joint3"));
+
 }

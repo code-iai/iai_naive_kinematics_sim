@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Georg Bartels, <georg.bartels@cs.uni-bremen.de>
+ * Copyright (c) 2015-2017, Georg Bartels, <georg.bartels@cs.uni-bremen.de>
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,7 @@
 #define IAI_NAIVE_KINEMATICS_SIM_IAI_NAIVE_KINEMATICS_SIM_HPP
 
 #include <iai_naive_kinematics_sim/simulator.hpp>
-#include <iai_naive_kinematics_sim/system.hpp>
+#include <iai_naive_kinematics_sim/simulator_node.hpp>
 #include <iai_naive_kinematics_sim/utils.hpp>
 #include <iai_naive_kinematics_sim/watchdog.hpp>
 
