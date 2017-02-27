@@ -23,7 +23,7 @@ include_directories(
   ${catkin_INCLUDE_DIRS})
 
 add_executable(velocity_resolved_sim 
-  src/${PROJECT_NAME}/velocity_resolved_sim.cpp)
+  src/${PROJECT_NAME}/simulator_node.cpp)
 add_dependencies(velocity_resolved_sim 
   ${${PROJECT_NAME}_EXPORTED_TARGETS} 
   ${catkin_EXPORTED_TARGETS})

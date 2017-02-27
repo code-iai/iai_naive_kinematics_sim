@@ -190,7 +190,7 @@ class SimulatorNode
 
 int main(int argc, char *argv[])
 {
-  ros::init(argc,argv,"velocity_resolved_sim");
+  ros::init(argc,argv,"simulator");
 
   SimulatorNode sim(ros::NodeHandle("~"));
 
