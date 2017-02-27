@@ -133,13 +133,17 @@ namespace iai_naive_kinematics_sim
     return map;
   }
 
-  inline sensor_msgs::JointState bootstrapJointState(const urdf::Model& model)
+  inline sensor_msgs::JointState bootstrapJointState(const urdf::Model& model,
+      const std::vector<std::string>& joint_names)
   {
     sensor_msgs::JointState state;
 
-    for(std::map<std::string, boost::shared_ptr<urdf::Joint> >::const_iterator it=model.joints_.begin(); it!=model.joints_.end(); ++it)
-      if(isMovingJoint(it->second->type))
-        pushBackJointState(state, it->second->name, 0.0, 0.0, 0.0);
+    for (size_t i=0; i<joint_names.size(); ++i)
+      if (!modelHasMovableJoint(model, joint_names[i]))
+        throw std::runtime_error("URDF model has no movable joint with name '" +
+            joint_names[i] + "'.");
+      else
+        pushBackJointState(state, joint_names[i], 0.0, 0.0, 0.0);
 
     return state;
   }

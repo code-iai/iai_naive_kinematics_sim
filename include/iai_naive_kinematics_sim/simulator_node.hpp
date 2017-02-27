@@ -47,7 +47,7 @@ namespace iai_naive_kinematics_sim
       {
         readSimFrequency();
   
-        sim_.init(readUrdf(), readControlledJoints(), readWatchdogPeriod());
+        sim_.init(readUrdf(), readSimulatedJoints(), readControlledJoints(), readWatchdogPeriod());
         sim_.setSubJointState(readStartConfig());
   
         sub_ = nh_.subscribe("commands", 1, &SimulatorNode::callback, this,
@@ -130,6 +130,18 @@ namespace iai_naive_kinematics_sim
         ROS_INFO("watchdog_period: %f", watchdog_period);
   
         return ros::Duration(watchdog_period);
+      }
+
+      std::vector<std::string> readSimulatedJoints() const
+      {
+        std::vector<std::string> simulated_joints =
+          readParam< std::vector<std::string> >(nh_, "simulated_joints");
+        std::string out_string;
+        for(size_t i =0; i < simulated_joints.size(); ++i)
+          out_string += " " + simulated_joints[i];
+        ROS_INFO("simulated joints:%s", out_string.c_str());
+  
+        return simulated_joints;
       }
   
       std::vector<std::string> readControlledJoints() const

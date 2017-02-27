@@ -1,7 +1,8 @@
-controlled_joints:
+simulated_joints:
   - joint1
   - joint2
 start_config:
   joint1: 0.5
   joint2: -0.03
-
+controlled_joints:
+  - joint1

@@ -41,11 +41,13 @@ namespace iai_naive_kinematics_sim
 
       ~Simulator() {}
 
-      void init(const urdf::Model& model, const std::vector<std::string>& controlled_joints,
+      void init(const urdf::Model& model, 
+          const std::vector<std::string>& simulated_joints,
+          const std::vector<std::string>& controlled_joints,
           const ros::Duration& watchdog_period)
       {
         model_ = model;
-        state_ = bootstrapJointState(model);
+        state_ = bootstrapJointState(model, simulated_joints);
         command_ = state_;
         index_map_ = makeJointIndexMap(state_.name);
         watchdogs_ = makeWatchdogs(model, controlled_joints, watchdog_period);
