@@ -157,7 +157,6 @@ namespace iai_naive_kinematics_sim
 
     return watchdogs;
   }
-
 }
 
 #endif

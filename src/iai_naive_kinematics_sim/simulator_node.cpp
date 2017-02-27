@@ -42,6 +42,7 @@ T readParam(const ros::NodeHandle& nh, const std::string& param_name)
   return param;
 }
    
+// FIXME: move into separate h-file
 class SimulatorNode
 {
   public:
@@ -60,19 +61,8 @@ class SimulatorNode
             ros::TransportHints().tcpNoDelay());
       pub_ = nh_.advertise<sensor_msgs::JointState>("joint_states", 1);
       server_ = nh_.advertiseService("set_joint_states", &SimulatorNode::set_joint_states, this);
+      timer_ = nh_.createTimer(sim_period_, &SimulatorNode::timer_callback, this);
       ok_ = true;
-    }
-
-    // FIXME: change into a periodic callback of a TimerEvent
-    void run()
-    {
-      while(ros::ok() && ok())
-      {
-        sim_.update(ros::Time::now(), sim_period_);
-        pub_.publish(sim_.getJointState());
-        ros::spinOnce();
-        sim_frequency_.sleep();
-      }
     }
 
   private:
@@ -80,6 +70,7 @@ class SimulatorNode
     ros::Publisher pub_;
     ros::Subscriber sub_;
     ros::ServiceServer server_;
+    ros::Timer timer_;
     ros::Rate sim_frequency_;
     ros::Duration sim_period_;
     iai_naive_kinematics_sim::Simulator sim_;
@@ -125,6 +116,12 @@ class SimulatorNode
       }
 
       return true;
+    }
+
+    void timer_callback(const ros::TimerEvent& e)
+    {
+      sim_.update(e.current_real, sim_period_);
+      pub_.publish(sim_.getJointState());
     }
 
     urdf::Model readUrdf() const
@@ -197,7 +194,7 @@ int main(int argc, char *argv[])
   try
   {
     sim.init();
-    sim.run();
+    ros::spin();
   }
   catch (const std::exception& e)
   {
