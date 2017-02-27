@@ -98,6 +98,20 @@ namespace iai_naive_kinematics_sim
     state.effort.clear();
   }
 
+  inline void sanityCheckJointState(const sensor_msgs::JointState& state)
+  {
+    if (state.name.size() != state.position.size())
+      throw std::range_error(std::string("State of type sensor_msgs::JointState") +
+          " has fields 'name' and 'position' with different sizes: " +
+          std::to_string(state.name.size()) + " compared to " +
+          std::to_string(state.position.size()) + ".");
+    if (state.name.size() != state.velocity.size())
+      throw std::range_error(std::string("State of type sensor_msgs::JointState") +
+          " has fields 'name' and 'velocity' with different sizes: " +
+          std::to_string(state.name.size()) + " compared to " +
+          std::to_string(state.velocity.size()) + ".");
+  }
+
   inline bool isMovingJoint(int type)
   {
     return (type == urdf::Joint::REVOLUTE ||

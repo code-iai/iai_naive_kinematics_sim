@@ -116,17 +116,7 @@ namespace iai_naive_kinematics_sim
 
       void setSubJointState(const sensor_msgs::JointState& state)
       {
-        // FIXME: code duplication! think about refactoring
-        if (state.name.size() != state.position.size())
-          throw std::range_error(std::string("State of type sensor_msgs::JointState") +
-              " has fields 'name' and 'position' with different sizes: " +
-              std::to_string(state.name.size()) + " compared to " +
-              std::to_string(state.position.size()) + ".");
-        if (state.name.size() != state.velocity.size())
-          throw std::range_error(std::string("State of type sensor_msgs::JointState") +
-              " has fields 'name' and 'velocity' with different sizes: " +
-              std::to_string(state.name.size()) + " compared to " +
-              std::to_string(state.velocity.size()) + ".");
+        sanityCheckJointState(state);
 
         for(size_t i=0; i<state.name.size(); ++i)
           setJointState(state_, getJointIndex(state.name[i]), state.name[i], 
@@ -135,12 +125,7 @@ namespace iai_naive_kinematics_sim
 
       void setSubCommand(const sensor_msgs::JointState& command, const ros::Time& now)
       {
-        // FIXME: code duplication! think about refactoring
-        if (command.name.size() != command.velocity.size())
-          throw std::range_error(std::string("Command of type sensor_msgs::JointState") +
-              " has fields 'name' and 'velocity' with different sizes: " +
-              std::to_string(command.name.size()) + " compared to " +
-              std::to_string(command.velocity.size()) + ".");
+        sanityCheckJointState(command);
 
         for (size_t i=0; i<command.name.size(); ++i)
         {
