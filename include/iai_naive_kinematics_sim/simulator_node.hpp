@@ -55,7 +55,6 @@ namespace iai_naive_kinematics_sim
         pub_ = nh_.advertise<sensor_msgs::JointState>("joint_states", 1);
         server_ = nh_.advertiseService("set_joint_states", &SimulatorNode::set_joint_states, this);
         timer_ = nh_.createTimer(sim_period_, &SimulatorNode::timer_callback, this);
-        ok_ = true;
       }
   
     private:
@@ -67,18 +66,6 @@ namespace iai_naive_kinematics_sim
       ros::Rate sim_frequency_;
       ros::Duration sim_period_;
       Simulator sim_;
-      // FIXME: remove all stuff related to ok
-      bool ok_;
-  
-      void stop()
-      {
-        ok_ = false;
-      }
-  
-      bool ok() const
-      {
-        return ok_;
-      }
   
       void callback(const sensor_msgs::JointState::ConstPtr& msg)
       {
@@ -90,7 +77,6 @@ namespace iai_naive_kinematics_sim
         catch (const std::exception& e)
         {
           ROS_ERROR("%s", e.what());
-          stop();
         }
       }
   
