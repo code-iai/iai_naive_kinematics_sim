@@ -29,6 +29,7 @@
 #include <ros/ros.h>
 #include <iai_naive_kinematics_sim/iai_naive_kinematics_sim.hpp>
 #include <sensor_msgs/JointState.h>
+#include <iai_naive_kinematics_sim/SetJointState.h>
 
 template <class T>
 T readParam(const ros::NodeHandle& nh, const std::string& param_name)
@@ -58,11 +59,13 @@ class SimulatorNode
       sub_ = nh_.subscribe("commands", 1, &SimulatorNode::callback, this,
             ros::TransportHints().tcpNoDelay());
       pub_ = nh_.advertise<sensor_msgs::JointState>("joint_states", 1);
+      server_ = nh_.advertiseService("set_joint_states", &SimulatorNode::set_joint_states, this);
       ok_ = true;
     }
 
     void run()
     {
+      // FIXME: change into a periodic callback of a TimerEvent
       ros::Rate sim_rate(sim_frequency_);
       ros::Duration period = sim_rate.expectedCycleTime();
       while(ros::ok() && ok())
@@ -78,6 +81,8 @@ class SimulatorNode
     ros::NodeHandle nh_;
     ros::Publisher pub_;
     ros::Subscriber sub_;
+    ros::ServiceServer server_;
+    // FIXME: change into a ROS::Rate object
     double sim_frequency_;
     iai_naive_kinematics_sim::SimulatorVelocityResolved sim_;
     bool ok_;
@@ -104,6 +109,24 @@ class SimulatorNode
         ROS_ERROR("%s", e.what());
         stop();
       }
+    }
+
+    bool set_joint_states(iai_naive_kinematics_sim::SetJointState::Request& request, 
+        iai_naive_kinematics_sim::SetJointState::Response& response)
+    {
+      try
+      {
+        sim_.setSubJointState(request.state);
+        response.success = true;
+        response.message = "";
+      } 
+      catch (const std::exception& e)
+      {
+        response.success = false;
+        response.message = e.what();
+      }
+
+      return true;
     }
 
     urdf::Model readUrdf() const
