@@ -35,12 +35,12 @@
 namespace iai_naive_kinematics_sim
 {
   // FIXME: rename
-  class SimulatorVelocityResolved
+  class Simulator
   {
     public:
-      SimulatorVelocityResolved() {}
+      Simulator() {}
 
-      ~SimulatorVelocityResolved() {}
+      ~Simulator() {}
 
       void init(const urdf::Model& model, const std::vector<std::string>& controlled_joints,
           const ros::Duration& watchdog_period)

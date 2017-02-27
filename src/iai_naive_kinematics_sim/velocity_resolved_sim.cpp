@@ -82,7 +82,7 @@ class SimulatorNode
     ros::ServiceServer server_;
     ros::Rate sim_frequency_;
     ros::Duration sim_period_;
-    iai_naive_kinematics_sim::SimulatorVelocityResolved sim_;
+    iai_naive_kinematics_sim::Simulator sim_;
     bool ok_;
 
     void stop()
