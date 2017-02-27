@@ -60,17 +60,6 @@ namespace iai_naive_kinematics_sim
       {
         if (dt.toSec() <= 0)
           throw std::runtime_error("Time interval given to update function not bigger than 0.");
-        // FIXME: consider dropping these checks to increase speed
-        if (state_.name.size() != state_.position.size())
-          throw std::range_error(std::string("Internal state of type sensor_msgs::JointState") +
-              " has fields 'name' and 'position' with different sizes: " +
-              std::to_string(state_.name.size()) + " compared to " +
-              std::to_string(state_.position.size()) + ".");
-        if (state_.name.size() != state_.velocity.size())
-          throw std::range_error(std::string("Internal state of type sensor_msgs::JointState") +
-              " has fields 'name' and 'velocity' with different sizes: " +
-              std::to_string(state_.name.size()) + " compared to " +
-              std::to_string(state_.velocity.size()) + ".");
 
         // ask the watchdogs, and stop joints that have not received a new command in a while
         for (std::map<std::string, Watchdog>::const_iterator it=watchdogs_.begin(); it!=watchdogs_.end(); ++it)
