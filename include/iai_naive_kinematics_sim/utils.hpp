@@ -157,6 +157,17 @@ namespace iai_naive_kinematics_sim
 
     return watchdogs;
   }
+
+  template <class T>
+  inline T readParam(const ros::NodeHandle& nh, const std::string& param_name)
+  {
+    T param;
+    if(!nh.getParam(param_name, param))
+      throw std::runtime_error("Could not find parameter with name '" +
+          param_name + "' in namespace '" + nh.getNamespace() + "'.");
+  
+    return param;
+  }
 }
 
 #endif

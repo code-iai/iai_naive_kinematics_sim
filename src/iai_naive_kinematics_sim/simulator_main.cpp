@@ -26,12 +26,24 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef IAI_NAIVE_KINEMATICS_SIM_IAI_NAIVE_KINEMATICS_SIM_HPP
-#define IAI_NAIVE_KINEMATICS_SIM_IAI_NAIVE_KINEMATICS_SIM_HPP
+#include <iai_naive_kinematics_sim/iai_naive_kinematics_sim.hpp>
 
-#include <iai_naive_kinematics_sim/simulator.hpp>
-#include <iai_naive_kinematics_sim/simulator_node.hpp>
-#include <iai_naive_kinematics_sim/utils.hpp>
-#include <iai_naive_kinematics_sim/watchdog.hpp>
+  
+int main(int argc, char *argv[])
+{
+  ros::init(argc,argv,"simulator");
 
-#endif
+  iai_naive_kinematics_sim::SimulatorNode sim(ros::NodeHandle("~"));
+
+  try
+  {
+    sim.init();
+    ros::spin();
+  }
+  catch (const std::exception& e)
+  {
+    ROS_ERROR("%s", e.what());
+  }
+
+  return 0;
+}
