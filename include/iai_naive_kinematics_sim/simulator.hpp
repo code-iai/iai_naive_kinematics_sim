@@ -34,7 +34,6 @@
 
 namespace iai_naive_kinematics_sim
 {
-  // FIXME: rename
   class Simulator
   {
     public:
