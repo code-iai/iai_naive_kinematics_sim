@@ -19,6 +19,8 @@
   <depend>message_runtime</depend>
   <depend>urdf</depend>
   <depend>sensor_msgs</depend>
+  <depend>std_msgs</depend>
   <test_depend>gtest</test_depend>
+  <test_depend>rosunit</test_depend>
 
 </package>
