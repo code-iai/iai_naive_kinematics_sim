@@ -1,0 +1,8 @@
+#!/bin/bash
+
+rostopic pub /simulator/projection_clock iai_naive_kinematics_sim/ProjectionClock "now:
+  secs: 123
+  nsecs: 0
+period:
+  secs: 0
+  nsecs: 10000000" --once

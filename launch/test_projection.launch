@@ -1,0 +1,13 @@
+<launch>
+
+  <param name="robot_description"
+    textfile="$(find iai_naive_kinematics_sim)/test_data/test_robot.urdf" />
+
+  <node pkg="iai_naive_kinematics_sim" type="simulator" 
+        name="simulator" output="screen">
+    <rosparam command="load" 
+        file="$(find iai_naive_kinematics_sim)/test_data/test_projection_config.yaml" />
+    <remap from="~joint_states" to="joint_states" />
+  </node>
+
+</launch>
