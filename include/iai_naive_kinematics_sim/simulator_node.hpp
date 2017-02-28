@@ -34,6 +34,7 @@
 #include <iai_naive_kinematics_sim/watchdog.hpp>
 #include <iai_naive_kinematics_sim/SetJointState.h>
 #include <iai_naive_kinematics_sim/ProjectionClock.h>
+#include <std_msgs/Header.h>
 
 namespace iai_naive_kinematics_sim
 {
@@ -58,15 +59,19 @@ namespace iai_naive_kinematics_sim
         pub_ = nh_.advertise<sensor_msgs::JointState>("joint_states", 1);
         server_ = nh_.advertiseService("set_joint_states", &SimulatorNode::set_joint_states, this);
         if (projection_mode_)
+        {
           clock_sub_ = nh_.subscribe("projection_clock", 1, &SimulatorNode::projection_clock_callback,
               this, ros::TransportHints().tcpNoDelay());
+
+          ack_pub_ = nh_.advertise<std_msgs::Header>("commands_received", 1);
+        }
         else
           timer_ = nh_.createTimer(sim_period_, &SimulatorNode::timer_callback, this);
       }
   
     private:
       ros::NodeHandle nh_;
-      ros::Publisher pub_;
+      ros::Publisher pub_, ack_pub_;
       ros::Subscriber sub_, clock_sub_;
       ros::ServiceServer server_;
       ros::Timer timer_;
@@ -79,8 +84,17 @@ namespace iai_naive_kinematics_sim
       {
         try
         {
-          ros::Time now = ros::Time::now();
-          sim_.setSubCommand(*msg, now);
+          if (projection_mode_)
+          {
+            sim_.setSubCommand(*msg, msg->header.stamp);
+            std_msgs::Header ack_msg = msg->header;
+            ack_pub_.publish(ack_msg);
+          }
+          else
+          {
+            ros::Time now = ros::Time::now();
+            sim_.setSubCommand(*msg, now);
+          }
         }
         catch (const std::exception& e)
         {
