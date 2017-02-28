@@ -6,11 +6,8 @@
   <node pkg="iai_naive_kinematics_sim" type="simulator" 
         name="simulator" output="screen">
     <rosparam command="load" 
-        file="$(find iai_naive_kinematics_sim)/test_data/test_sim_config.yaml" />
+        file="$(find iai_naive_kinematics_sim)/test_data/test_projection_config.yaml" />
     <remap from="~joint_states" to="joint_states" />
   </node>
-
-  <node pkg="robot_state_publisher" type="robot_state_publisher"
-        name="robot_state_publisher" />
 
 </launch>

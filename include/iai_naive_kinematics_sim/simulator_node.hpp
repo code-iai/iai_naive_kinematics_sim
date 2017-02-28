@@ -33,6 +33,8 @@
 #include <iai_naive_kinematics_sim/utils.hpp>
 #include <iai_naive_kinematics_sim/watchdog.hpp>
 #include <iai_naive_kinematics_sim/SetJointState.h>
+#include <iai_naive_kinematics_sim/ProjectionClock.h>
+#include <std_msgs/Header.h>
 
 namespace iai_naive_kinematics_sim
 {
@@ -46,33 +48,53 @@ namespace iai_naive_kinematics_sim
       void init()
       {
         readSimFrequency();
-  
-        sim_.init(readUrdf(), readControlledJoints(), readWatchdogPeriod());
+        projection_mode_ = readParam<bool>(nh_, "projection_mode");
+
+        sim_.init(readUrdf(), readSimulatedJoints(), readControlledJoints(), readWatchdogPeriod());
         sim_.setSubJointState(readStartConfig());
   
+
         sub_ = nh_.subscribe("commands", 1, &SimulatorNode::callback, this,
               ros::TransportHints().tcpNoDelay());
         pub_ = nh_.advertise<sensor_msgs::JointState>("joint_states", 1);
         server_ = nh_.advertiseService("set_joint_states", &SimulatorNode::set_joint_states, this);
-        timer_ = nh_.createTimer(sim_period_, &SimulatorNode::timer_callback, this);
+        if (projection_mode_)
+        {
+          clock_sub_ = nh_.subscribe("projection_clock", 1, &SimulatorNode::projection_clock_callback,
+              this, ros::TransportHints().tcpNoDelay());
+
+          ack_pub_ = nh_.advertise<std_msgs::Header>("commands_received", 1);
+        }
+        else
+          timer_ = nh_.createTimer(sim_period_, &SimulatorNode::timer_callback, this);
       }
   
     private:
       ros::NodeHandle nh_;
-      ros::Publisher pub_;
-      ros::Subscriber sub_;
+      ros::Publisher pub_, ack_pub_;
+      ros::Subscriber sub_, clock_sub_;
       ros::ServiceServer server_;
       ros::Timer timer_;
       ros::Rate sim_frequency_;
       ros::Duration sim_period_;
       Simulator sim_;
+      bool projection_mode_;
   
       void callback(const sensor_msgs::JointState::ConstPtr& msg)
       {
         try
         {
-          ros::Time now = ros::Time::now();
-          sim_.setSubCommand(*msg, now);
+          if (projection_mode_)
+          {
+            sim_.setSubCommand(*msg, msg->header.stamp);
+            std_msgs::Header ack_msg = msg->header;
+            ack_pub_.publish(ack_msg);
+          }
+          else
+          {
+            ros::Time now = ros::Time::now();
+            sim_.setSubCommand(*msg, now);
+          }
         }
         catch (const std::exception& e)
         {
@@ -100,6 +122,12 @@ namespace iai_naive_kinematics_sim
       void timer_callback(const ros::TimerEvent& e)
       {
         sim_.update(e.current_real, sim_period_);
+        pub_.publish(sim_.getJointState());
+      }
+
+      void projection_clock_callback(const ProjectionClock::ConstPtr& msg)
+      {
+        sim_.update(msg->now, msg->period);
         pub_.publish(sim_.getJointState());
       }
   
@@ -130,6 +158,18 @@ namespace iai_naive_kinematics_sim
         ROS_INFO("watchdog_period: %f", watchdog_period);
   
         return ros::Duration(watchdog_period);
+      }
+
+      std::vector<std::string> readSimulatedJoints() const
+      {
+        std::vector<std::string> simulated_joints =
+          readParam< std::vector<std::string> >(nh_, "simulated_joints");
+        std::string out_string;
+        for(size_t i =0; i < simulated_joints.size(); ++i)
+          out_string += " " + simulated_joints[i];
+        ROS_INFO("simulated joints:%s", out_string.c_str());
+  
+        return simulated_joints;
       }
   
       std::vector<std::string> readControlledJoints() const

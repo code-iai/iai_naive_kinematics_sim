@@ -1,0 +1,10 @@
+#!/bin/bash
+
+rostopic pub /simulator/commands sensor_msgs/JointState "header:
+  seq: 0 
+  stamp: {secs: 123, nsecs: 0}
+  frame_id: ''
+name: ['joint1']
+position: [0]
+velocity: [0.1]
+effort: [0]" --once
