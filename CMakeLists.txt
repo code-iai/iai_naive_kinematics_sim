@@ -8,6 +8,10 @@ find_package(catkin REQUIRED COMPONENTS
   urdf
   sensor_msgs)
 
+add_message_files(DIRECTORY msg
+  FILES
+  ProjectionClock.msg)
+
 add_service_files(DIRECTORY srv
   FILES
   SetJointState.srv)
