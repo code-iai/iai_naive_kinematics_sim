@@ -6,3 +6,6 @@ start_config:
   joint2: -0.03
 controlled_joints:
   - joint1
+projection_mode: false
+sim_frequency: 100
+watchdog_period: 0.1

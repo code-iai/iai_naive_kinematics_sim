@@ -6,9 +6,7 @@
   <node pkg="iai_naive_kinematics_sim" type="simulator" 
         name="simulator" output="screen">
     <rosparam command="load" 
-        file="$(find iai_naive_kinematics_sim)/test_data/test_config.yaml" />
-    <param name="sim_frequency" value="100.0"/>
-    <param name="watchdog_period" value="0.2"/>
+        file="$(find iai_naive_kinematics_sim)/test_data/test_sim_config.yaml" />
     <remap from="~joint_states" to="joint_states" />
   </node>
 

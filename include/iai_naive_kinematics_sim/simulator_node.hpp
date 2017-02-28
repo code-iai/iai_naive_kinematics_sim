@@ -33,6 +33,7 @@
 #include <iai_naive_kinematics_sim/utils.hpp>
 #include <iai_naive_kinematics_sim/watchdog.hpp>
 #include <iai_naive_kinematics_sim/SetJointState.h>
+#include <iai_naive_kinematics_sim/ProjectionClock.h>
 
 namespace iai_naive_kinematics_sim
 {
@@ -46,26 +47,33 @@ namespace iai_naive_kinematics_sim
       void init()
       {
         readSimFrequency();
-  
+        projection_mode_ = readParam<bool>(nh_, "projection_mode");
+
         sim_.init(readUrdf(), readSimulatedJoints(), readControlledJoints(), readWatchdogPeriod());
         sim_.setSubJointState(readStartConfig());
   
+
         sub_ = nh_.subscribe("commands", 1, &SimulatorNode::callback, this,
               ros::TransportHints().tcpNoDelay());
         pub_ = nh_.advertise<sensor_msgs::JointState>("joint_states", 1);
         server_ = nh_.advertiseService("set_joint_states", &SimulatorNode::set_joint_states, this);
-        timer_ = nh_.createTimer(sim_period_, &SimulatorNode::timer_callback, this);
+        if (projection_mode_)
+          clock_sub_ = nh_.subscribe("projection_clock", 1, &SimulatorNode::projection_clock_callback,
+              this, ros::TransportHints().tcpNoDelay());
+        else
+          timer_ = nh_.createTimer(sim_period_, &SimulatorNode::timer_callback, this);
       }
   
     private:
       ros::NodeHandle nh_;
       ros::Publisher pub_;
-      ros::Subscriber sub_;
+      ros::Subscriber sub_, clock_sub_;
       ros::ServiceServer server_;
       ros::Timer timer_;
       ros::Rate sim_frequency_;
       ros::Duration sim_period_;
       Simulator sim_;
+      bool projection_mode_;
   
       void callback(const sensor_msgs::JointState::ConstPtr& msg)
       {
@@ -100,6 +108,12 @@ namespace iai_naive_kinematics_sim
       void timer_callback(const ros::TimerEvent& e)
       {
         sim_.update(e.current_real, sim_period_);
+        pub_.publish(sim_.getJointState());
+      }
+
+      void projection_clock_callback(const ProjectionClock::ConstPtr& msg)
+      {
+        sim_.update(msg->now, msg->period);
         pub_.publish(sim_.getJointState());
       }
   
