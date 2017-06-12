@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>iai_naive_kinematics_sim</name>
-  <version>0.0.3</version>
+  <version>0.0.4</version>
   <description>
     A set of naive robot kinematics simulators for ROS. Main design goal: Providing 
     a ROS-based kinematics simulator for early-stage development of kinematics algorithms
