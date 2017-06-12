@@ -116,8 +116,6 @@ namespace iai_naive_kinematics_sim
 
       void setSubCommand(const sensor_msgs::JointState& command, const ros::Time& now)
       {
-        sanityCheckJointState(command);
-
         for (size_t i=0; i<command.name.size(); ++i)
         {
           std::map<std::string, Watchdog>::iterator it = watchdogs_.find(command.name[i]);
