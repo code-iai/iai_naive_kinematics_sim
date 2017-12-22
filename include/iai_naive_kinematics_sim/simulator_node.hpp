@@ -42,7 +42,7 @@ namespace iai_naive_kinematics_sim
   {
     public:
       SimulatorNode(const ros::NodeHandle& nh): 
-        nh_(nh), sim_frequency_(0.0) {}
+        nh_(nh), sim_frequency_(1.0) {}
       ~SimulatorNode() {}
   
       void init()
