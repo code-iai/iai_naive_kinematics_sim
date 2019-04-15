@@ -18,7 +18,7 @@ class WSG50SimDriver(object):
                                              JointTrajectoryControllerState).joint_names
 
         self.moving_pub = rospy.Publisher('~moving', Bool, queue_size=10)
-        self.state_pub = rospy.Publisher('~state', Status, queue_size=10)
+        self.state_pub = rospy.Publisher('~status', Status, queue_size=10)
         self.joint_state_sub = rospy.Subscriber('joint_states', JointState, self.js_cb, queue_size=10)
         rospy.wait_for_message('joint_states', JointState)
 
