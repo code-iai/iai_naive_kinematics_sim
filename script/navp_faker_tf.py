@@ -14,7 +14,7 @@ class TfWrapper(object):
     def __init__(self, buffer_size=2):
         self.tfBuffer = Buffer(rospy.Duration(buffer_size))
         self.tf_listener = TransformListener(self.tfBuffer)
-        self.tf_static = StaticTransformBroadcaster()
+        # self.tf_static = StaticTransformBroadcaster()
         self.tf_frequency = rospy.Duration(.05)
         self.broadcasting_frames = {}
         self.broadcasting_frames_lock = Lock()
