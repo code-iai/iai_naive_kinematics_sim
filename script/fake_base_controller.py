@@ -74,7 +74,7 @@ def cmd_vel_sub(data):
     :type data: Twist
     """
     twist = make_twist(data.linear.x, data.linear.y, data.angular.z)
-    twist = lookup_pose('odom_combined', 'base_footprint').M * twist
+    twist = lookup_pose(odom_frame, 'base_footprint').M * twist
     js = JointState()
     js.name = [x_joint, y_joint, z_joint]
     js.velocity.append(twist.vel[0])
