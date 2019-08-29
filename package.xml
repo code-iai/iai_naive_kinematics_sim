@@ -20,6 +20,9 @@
   <depend>urdf</depend>
   <depend>sensor_msgs</depend>
   <depend>std_msgs</depend>
+  <depend>ros_control_boilerplate</depend>
+  <depend>position_controllers</depend>
+  <depend>joint_trajectory_controller</depend>
   <test_depend>gtest</test_depend>
   <test_depend>rosunit</test_depend>
 
