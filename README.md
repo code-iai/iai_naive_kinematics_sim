@@ -5,7 +5,7 @@ TODO: add a pretty image with rviz-screenshots of simulated robots (table-mounte
 
 ## Installation
 ### Installation from source using ```catkin``` and ```rosdep```
-This installation assumes you are using ROS Indigo on Ubuntu 14.04.
+This installation assumes you are using ROS Indigo on Ubuntu 14.04. If you are using 18.04, please checkout the branch 18.04.
 
 Step-by-step instructions for installing this package in a ```catkin``` workspace located at ```~/catkin_ws/src``` with the ```~/.bashrc``` properly set up and source:
 ```shell
