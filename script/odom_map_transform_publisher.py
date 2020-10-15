@@ -9,6 +9,8 @@ from giskardpy import logging
 from giskardpy.plugin import GiskardBehavior
 from giskardpy.utils import normalize_quaternion_msg
 
+from threading import Lock
+
 
 class OdomTransformPublisher(object):
 
@@ -19,6 +21,7 @@ class OdomTransformPublisher(object):
         self.transform.rotation = Quaternion(0, 0, 0, 1)
         self.rate = rospy.Rate(10)
         self.service = rospy.Service('update_map_odom_transform', SetMapOdomTransform, self.update_transform_cb)
+        self.lock = Lock()
         self.loop()
 
     def loop(self):
@@ -27,30 +30,21 @@ class OdomTransformPublisher(object):
             self.rate.sleep()
 
     def update_transform_cb(self, req):
-        self.transform = req.transform
+        with self.lock:
+            self.transform = req.transform
+            self.transform.rotation = normalize_quaternion_msg(self.transform.rotation)
         return True
 
     def publish_transform(self):
-        try:
-            tf_msg = TFMessage()
-            tf =  TransformStamped()
+        tf_msg = TFMessage()
+        tf =  TransformStamped()
+        with self.lock:
             tf.transform = self.transform
-            #tf.header = fk.header
-            tf.header.frame_id = "map"
-            tf.header.stamp = rospy.get_rostime()
-            tf.child_frame_id = "odom_combined"
-            #tf.transform.translation.x = fk.pose.position.x
-            #tf.transform.translation.y = fk.pose.position.y
-            #tf.transform.translation.z = fk.pose.position.z
-            #tf.transform.rotation = normalize_quaternion_msg(fk.pose.orientation)
-            tf_msg.transforms.append(tf)
-            self.tf_pub.publish(tf_msg)
-        except KeyError as e:
-            pass
-        except UnboundLocalError as e:
-            pass
-        except ValueError as e:
-            pass
+        tf.header.frame_id = "map"
+        tf.header.stamp = rospy.get_rostime()
+        tf.child_frame_id = "odom_combined"
+        tf_msg.transforms.append(tf)
+        self.tf_pub.publish(tf_msg)
 
 
 if __name__ == "__main__":
