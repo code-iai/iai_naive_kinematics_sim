@@ -3,7 +3,7 @@ import rospy
 import numpy as np
 from geometry_msgs.msg import TransformStamped, Quaternion, Transform
 from tf2_msgs.msg import TFMessage
-from iai_naive_kinematics_sim.srv import SetMapOdomTransform
+from iai_naive_kinematics_sim.srv import UpdateTransform
 from threading import Lock, Thread
 import sys
 
@@ -18,7 +18,7 @@ class TransformPublisher(object):
         self.rate = rospy.Rate(publish_rate)
         self.child_frame = child_frame
         self.parent_frame = parent_frame
-        self.service = rospy.Service(topic_name, SetMapOdomTransform, self.update_transform_cb)
+        self.service = rospy.Service(topic_name, UpdateTransform, self.update_transform_cb)
         self.lock = Lock()
         self.running = True
         self.thread.start()
