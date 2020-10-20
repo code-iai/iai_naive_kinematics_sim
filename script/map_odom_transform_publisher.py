@@ -4,32 +4,31 @@ import numpy as np
 from geometry_msgs.msg import TransformStamped, Quaternion, Transform
 from tf2_msgs.msg import TFMessage
 from iai_naive_kinematics_sim.srv import SetMapOdomTransform
-from threading import Lock
-import numpy as np
+from threading import Lock, Thread
+import sys
 
 
-class OdomTransformPublisher(object):
+class TransformPublisher(object):
 
-    def __init__(self, name):
-        rospy.init_node(name)
+    def __init__(self, child_frame, parent_frame, topic_name, publish_rate=10):
         self.tf_pub = rospy.Publisher(u'/tf', TFMessage, queue_size=10)
-        while not rospy.has_param('~child_frame'):
-            logging.loginfo('waiting for param ' + '~child_frame')
-            rospy.sleep(1)
-        self.child_frame = rospy.get_param('~child_frame', "")
-        while not rospy.has_param('~parent_frame'):
-            logging.loginfo('waiting for param ' + '~parent_frame')
-            rospy.sleep(1)
-        self.parent_frame = rospy.get_param('~parent_frame', "")
+        self.thread = Thread(target=self.loop)
         self.transform = Transform()
         self.transform.rotation = Quaternion(0, 0, 0, 1)
-        self.rate = rospy.Rate(10)
-        self.service = rospy.Service('~update_map_odom_transform', SetMapOdomTransform, self.update_transform_cb)
+        self.rate = rospy.Rate(publish_rate)
+        self.child_frame = child_frame
+        self.parent_frame = parent_frame
+        self.service = rospy.Service(topic_name, SetMapOdomTransform, self.update_transform_cb)
         self.lock = Lock()
-        self.loop()
+        self.running = True
+        self.thread.start()
+
+    def __del__(self):
+        self.running = False
+        self.thread.join()
 
     def loop(self):
-        while not rospy.is_shutdown():
+        while not rospy.is_shutdown() and self.running:
             self.publish_transform()
             self.rate.sleep()
 
@@ -65,4 +64,13 @@ class OdomTransformPublisher(object):
 
 
 if __name__ == "__main__":
-    OdomTransformPublisher("map_odom_transform_publisher")
+    rospy.init_node("map_odom_transform_publisher")
+    while not rospy.has_param('~child_frame') or not rospy.has_param('~parent_frame'):
+        if(rospy.is_shutdown()):
+            sys.exit(0)
+        print('waiting for param {0}/child_frame and/or {0}/parent_frame'.format(rospy.get_name()))
+        rospy.sleep(1)
+    child_frame = rospy.get_param('~child_frame', "")
+    parent_frame = rospy.get_param('~parent_frame', "")
+    TransformPublisher(child_frame, parent_frame, '~update_map_odom_transform')
+    rospy.spin()
