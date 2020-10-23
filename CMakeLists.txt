@@ -16,7 +16,8 @@ add_message_files(DIRECTORY msg
 
 add_service_files(DIRECTORY srv
   FILES
-  SetJointState.srv)
+  SetJointState.srv
+  UpdateTransform.srv)
 
 generate_messages(DEPENDENCIES sensor_msgs)
 
