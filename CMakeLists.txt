@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.0.2)
 project(iai_naive_kinematics_sim)
 set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
 
@@ -47,3 +47,10 @@ if(CATKIN_ENABLE_TESTING)
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test_data)
   target_link_libraries(${PROJECT_NAME}-test ${catkin_LIBRARIES})
 endif()
+
+catkin_install_python(PROGRAMS 
+  script/fake_base_controller.py
+  script/map_odom_transform_publisher.py
+  script/navp_faker_tf.py
+  script/wsg_50_faker.py
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
