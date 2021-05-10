@@ -23,6 +23,7 @@
   <depend>ros_control_boilerplate</depend>
   <depend>position_controllers</depend>
   <depend>joint_trajectory_controller</depend>
+  <depend>joint_state_publisher</depend>
   <test_depend>gtest</test_depend>
   <test_depend>rosunit</test_depend>
 
