@@ -152,9 +152,9 @@ namespace iai_naive_kinematics_sim
         return it->second;
       }
 
-      boost::shared_ptr<urdf::Joint> getJoint(const std::string& name) const
+      urdf::JointSharedPtr getJoint(const std::string& name) const
       {
-        std::map<std::string, boost::shared_ptr<urdf::Joint> >::const_iterator it =
+        std::map<std::string, urdf::JointSharedPtr >::const_iterator it =
           model_.joints_.find(name);
 
         if (it == model_.joints_.end())
@@ -165,7 +165,7 @@ namespace iai_naive_kinematics_sim
 
       void enforceJointLimits(const std::string& name)
       {
-        boost::shared_ptr<urdf::Joint> joint = getJoint(name);
+        urdf::JointSharedPtr joint = getJoint(name);
 
         if ((joint->type == urdf::Joint::REVOLUTE || joint->type == urdf::Joint::PRISMATIC) &&
             joint->limits.get())

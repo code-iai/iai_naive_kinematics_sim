@@ -121,7 +121,7 @@ namespace iai_naive_kinematics_sim
 
   inline bool modelHasMovableJoint(const urdf::Model& model, const std::string& name)
   {
-    boost::shared_ptr<const urdf::Joint> joint = model.getJoint(name);
+    urdf::JointConstSharedPtr joint = model.getJoint(name);
     return joint.get() && isMovingJoint(joint->type);
   }
 

@@ -74,7 +74,7 @@ def cmd_vel_sub(data):
     :type data: Twist
     """
     twist = make_twist(data.linear.x, data.linear.y, data.angular.z)
-    twist = lookup_pose(odom_frame, base_frame).M * twist
+    twist = lookup_pose(odom_frame, base_footprint).M * twist
     js = JointState()
     js.name = [x_joint, y_joint, z_joint]
     js.velocity.append(twist.vel[0])
@@ -91,7 +91,7 @@ if __name__ == '__main__':
         y_joint = rospy.get_param('~odom_y_joint')
         z_joint = rospy.get_param('~odom_z_joint')
         odom_frame = rospy.get_param('~odom')
-        base_frame = rospy.get_param('~base_footprint', 'base_footprint')
+        base_footprint = rospy.get_param('~base_footprint', 'base_footprint')
         cmd_vel_sub = rospy.Subscriber('~cmd_vel', Twist, cmd_vel_sub, queue_size=10)
         cmd_pub = rospy.Publisher('~commands', JointState, queue_size=10)
         rospy.loginfo('base controller running')

@@ -33,7 +33,10 @@ class WSG50SimDriver(object):
             self.link_id = data.name.index(self.gripper_name)
         self.js = data
         moving = Bool()
-        moving.data = abs(self.js.velocity[self.link_id]) > 1e-4
+        try:
+            moving.data = abs(self.js.velocity[self.link_id]) > 1e-4
+        except IndexError:
+            return
         self.moving_pub.publish(moving)
         state = Status()
         state.header.stamp = rospy.get_rostime()
