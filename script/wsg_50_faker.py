@@ -11,7 +11,6 @@ from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 
 class WSG50SimDriver(object):
     def __init__(self, gripper_name, gripper_state, gripper_follow_joint_trajectory):
-        rospy.logerr(22)
         self.js = None
         self.link_id = None
         self.gripper_name = gripper_name
