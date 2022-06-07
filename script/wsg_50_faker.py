@@ -10,19 +10,20 @@ from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 
 
 class WSG50SimDriver(object):
-    def __init__(self, gripper_name):
+    def __init__(self, gripper_name, gripper_state, gripper_follow_joint_trajectory):
         self.js = None
         self.link_id = None
         self.gripper_name = gripper_name
-        self.joints = rospy.wait_for_message('/whole_body_controller/state',
+        self.gripper_state = gripper_state
+        self.gripper_follow_joint_trajectory = gripper_follow_joint_trajectory
+        self.joints = rospy.wait_for_message(self.gripper_state,
                                              JointTrajectoryControllerState).joint_names
 
         self.moving_pub = rospy.Publisher('~moving', Bool, queue_size=10)
         self.state_pub = rospy.Publisher('~status', Status, queue_size=10)
         self.joint_state_sub = rospy.Subscriber('joint_states', JointState, self.js_cb, queue_size=10)
         rospy.wait_for_message('joint_states', JointState)
-
-        self.follow_joint_traj_client = actionlib.SimpleActionClient('/whole_body_controller/follow_joint_trajectory',
+        self.follow_joint_traj_client = actionlib.SimpleActionClient(self.gripper_follow_joint_trajectory,
                                                                      FollowJointTrajectoryAction)
         self.follow_joint_traj_client.wait_for_server()
         self.goal_pose_sub = rospy.Subscriber('~goal_position', PositionCmd, self.goal_pose_cb, queue_size=10)
@@ -51,7 +52,7 @@ class WSG50SimDriver(object):
         traj = JointTrajectory()
         traj.joint_names = self.joints
         jtp = JointTrajectoryPoint()
-        jtp.positions = list(rospy.wait_for_message(u'/whole_body_controller/state',
+        jtp.positions = list(rospy.wait_for_message(self.gripper_state,
                                                JointTrajectoryControllerState).actual.positions)
         jtp.positions[self.joints.index(self.gripper_name)] = data.pos / multiplier
         jtp.velocities = []
@@ -72,6 +73,8 @@ class WSG50SimDriver(object):
 if __name__ == '__main__':
     rospy.init_node('wsg_50')
     gripper_joint_name = rospy.get_param('~gripper_joint_name', default='gripper_joint')
-    node = WSG50SimDriver(gripper_joint_name)
+    gripper_state = rospy.get_param('~gripper_state', default='gripper_controller/state')
+    gripper_follow_joint_trajectory = rospy.get_param('~gripper_follow_joint_trajectory', default='gripper_controller/follow_joint_trajectory')
+    node = WSG50SimDriver(gripper_joint_name, gripper_state, gripper_follow_joint_trajectory)
     rospy.loginfo("kms 50 sim driver for '{}' joint running.".format(gripper_joint_name))
     rospy.spin()
